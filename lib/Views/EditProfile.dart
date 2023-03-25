@@ -1,10 +1,19 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csc_picker/csc_picker.dart';
+import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:intl/intl.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -18,8 +27,12 @@ class _EditProfileState extends State<EditProfile> {
   var controllerLastName = TextEditingController();
   var controllerEmail = TextEditingController();
   var controllerPhone = TextEditingController();
-  var controllerAddress = TextEditingController();
+
   var controllerPassword = TextEditingController();
+  String countryValue = "";
+  String stateValue="";
+  String cityValue = "";
+  String birthDay = "Hãy chọn ngày sinh"; 
   User ?user;
   Future getUser() async{
     
@@ -27,22 +40,29 @@ class _EditProfileState extends State<EditProfile> {
      var docSnapshot =  await collection.doc(auth.FirebaseAuth.instance.currentUser!.uid).get();
     setState(() {
       user = User.fromJson(docSnapshot.data()!);
-      print(user!.firstName);
+     
     });
-  }
-    @override
-  void initState() {
-    user = User();
-    // TODO: implement initState
-    getUser();
-   
-    super.initState();
     controllerFirstName.text = user!.firstName!;
     controllerLastName.text = user!.lastName!;
     controllerEmail.text = user!.email!;
     controllerPhone.text = user!.phoneNumber!;
-    controllerAddress.text = user!.address!;
     controllerPassword.text = user!.password!;
+    if(user!.birthDay.toString()!=""){
+      birthDay = user!.birthDay!;
+    }
+    
+  }
+    @override
+  void initState() {
+    countryValue= "Viet Nam";
+    stateValue= "State";
+    cityValue= "City";
+
+    user = User();
+    // TODO: implement initState
+    getUser();
+    super.initState();
+  
   }
    Widget _entryField(String title,var controller, {bool isPassword = false}) {
     return Expanded(flex: 3,child: Container(
@@ -59,12 +79,23 @@ class _EditProfileState extends State<EditProfile> {
       
     ));
   }
-  @override
+  void updateProfile(){
+          user!.firstName = controllerFirstName.text;
+          user!.lastName = controllerLastName.text;
+          user!.email = controllerEmail.text;
+          user!.phoneNumber = controllerPhone.text;
+          user!.password = controllerPassword.text;
+          user!.birthDay = birthDay;
+          // ignore: prefer_interpolation_to_compose_strings
+          user!.address = cityValue!="City"?cityValue+", "+stateValue+", "+countryValue :stateValue!="State"?stateValue+", "+countryValue:countryValue!="Viet Nam"?countryValue:"";
+          
+  }
+    @override
   Widget build(BuildContext context) {
     return Scaffold(body:
       Container(
-        margin: EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
+        margin: EdgeInsets.all(20),
+        child: SingleChildScrollView(child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
       children:<Widget> [
@@ -80,17 +111,34 @@ class _EditProfileState extends State<EditProfile> {
                             border:
                                 Border.all(color: const Color.fromARGB(255, 0, 207, 142), width: 2),
                             borderRadius: BorderRadius.circular(100)),
-                        child: const CircleAvatar(
-                          backgroundImage: AssetImage(
-                            'assets/images/tien.jpg'
+                        child: CircleAvatar(
+                          backgroundImage: NetworkImage(
+                            '${user!.image}'
                           ),
                         )),
                        
                         Positioned(
                               bottom: 0,
                               right: 0, //give the values according to your requirement
-                              child: InkWell(onTap: (){
-                              
+                              child: InkWell(onTap: () async{
+                              FilePickerResult? result = await FilePicker.platform.pickFiles();
+              // ignore: unnecessary_null_comparison
+             
+                                if(result!=null)
+                                {
+                                  final file = File(result.files.first.path!);
+                                  // ignore: curly_braces_in_flow_control_structures, use_build_context_synchronously
+                                   var firebaseStorage =  FirebaseStorage.instance.ref().child("image/${auth.FirebaseAuth.instance.currentUser!.uid}/${DateTime.now().toString()}");
+                                    if( user!.image != "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7"){
+                                       await firebaseStorage.child(user!.image!).delete();
+                                    }
+                                    await firebaseStorage.putFile(file);
+                                    user!.image = await firebaseStorage.getDownloadURL();
+                                    updateData("User", user);
+                                    setState(() {
+                                      user;
+                                    });
+                                }
                             }, child:Material(
                                   color: mainColor,
                                   elevation: 10,
@@ -111,16 +159,16 @@ class _EditProfileState extends State<EditProfile> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-        const Expanded (child:Text("First Name:"),flex: 1,),
-        _entryField("First Name",controllerFirstName)
+        const Expanded (child:Text("Tên:"),flex: 1,),
+        _entryField("Nhập tên",controllerFirstName)
       ],),
       Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
         // ignore: sort_child_properties_last
-        const Expanded (child:Text("Last Name:"),flex: 1,),
-        _entryField("Last Name",controllerLastName)
+        const Expanded (child:Text("Họ:"),flex: 1,),
+        _entryField("Nhập họ",controllerLastName)
       ],),
       Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -132,8 +180,8 @@ class _EditProfileState extends State<EditProfile> {
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded (child:Text("Phone:"),flex: 1,),
-        _entryField("Phone",controllerPhone)
+          const Expanded (child:Text("Số điện thoại:"),flex: 1,),
+        _entryField("Nhập số điện thoại",controllerPhone)
        
         
         
@@ -142,22 +190,71 @@ class _EditProfileState extends State<EditProfile> {
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded (child:Text("Address:"),flex: 1,),
-        _entryField("Address",controllerAddress)
+          const Expanded (child:Text("Địa chỉ:"),flex: 1,),
+       
+        	Expanded(flex: 3,child:CSCPicker(showStates: true,showCities: true,countryFilter: const [CscCountry.Vietnam,CscCountry.Vietnam,CscCountry.Vietnam],
+                  onCountryChanged:(value) {
+                  
+                 countryValue = value;
+      			
+      		},
+           onStateChanged:(value) {
+                  
+                     stateValue = value!=null?value.toString():"";
+      		},
+           onCityChanged:(value) {
+                 
+                     cityValue = value!=null?value.toString():"";
+      		
+      		},
+          ),)
       ],),
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded (child:Text("Passwor:"),flex: 1,),
+          const Expanded (child:Text("Password:"),flex: 1,),
         _entryField("Password",controllerPassword,isPassword: true)
       
       ],),
-       Row(crossAxisAlignment: CrossAxisAlignment.center,
+      Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-        Expanded(child:Container(height: 50,child:ElevatedButton(onPressed: (){}, child: const Text("Save",style: TextStyle(fontSize: 17),),style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll(mainColor)),)))
-      ],)
+          const Expanded (flex: 1,child:Text("Ngày sinh:"),),
+          Expanded(flex: 3,child:TextButton(
+    onPressed: () {
+        DatePicker.showDatePicker(context,
+                              showTitleActions: true,
+                              minTime: DateTime(1900, 1,1),
+                              maxTime: DateTime(2024, 1, 1), onConfirm: (date) {
+                              setState(() {
+                                birthDay = DateFormat('dd/MM/yyyy').format(date).toString();
+                              });
+                          }, currentTime: DateTime.now(), locale: LocaleType.vi);
+    },
+    child: Text(
+        '${birthDay}',
+        style: TextStyle(color: Colors.blue,fontSize: 17),
+    )))
+      
+      ],),
+       
     ],),)
-    );
+    ),
+    bottomNavigationBar: Padding(
+
+        padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+        child: Container(
+          height: 50,
+          child:
+          ElevatedButton(
+          onPressed: () {
+                updateProfile();
+                updateData("User",user);
+          },
+          
+          style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll(mainColor)), child: const Text("Lưu",style: TextStyle(fontSize: 17),)
+        ),
+      ),
+    ));
   }
 }

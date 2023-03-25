@@ -1,4 +1,5 @@
 import 'package:do_an_tot_nghiep/Models/User.dart';
+import 'package:do_an_tot_nghiep/Services/AuthService.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
 import 'package:do_an_tot_nghiep/Views/Navigation.dart';
 import 'package:do_an_tot_nghiep/Views/bezierContainer.dart';
@@ -134,9 +135,17 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
+  void loginByGoogle()async{
+       await AuthService().googleLogin();
+      if(FirebaseAuth.instance.currentUser!=null){
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView()));
+      }
+  }
   Widget _facebookButton() {
-    return Container(
+    return InkWell(onTap: (){
+        loginByGoogle();
+      
+      },child:Container(
       height: 50,
       margin: const EdgeInsets.symmetric(vertical: 20),
       decoration: const BoxDecoration(
@@ -180,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _createAccountLabel() {

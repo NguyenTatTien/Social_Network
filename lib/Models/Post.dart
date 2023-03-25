@@ -26,7 +26,7 @@ class Post {
         'Content': postContent,
         'Image':postImage,
         'LikeCount':likeCount,
-        'commentCount':commentCount,
+        'CommentCount':commentCount,
         'CreateBy':createBy,
         "CreateDate":createDate,
         'UpdateDate':updatedDate

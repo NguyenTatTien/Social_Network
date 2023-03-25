@@ -1,4 +1,7 @@
+import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
+import 'package:do_an_tot_nghiep/Views/Chat.dart';
 import 'package:do_an_tot_nghiep/Views/Guest.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,32 +18,23 @@ class Message extends StatefulWidget {
 
 class _MessageState extends State<Message> {
 
-  final List<User> _users = [
-    User(firstName:  'Elliana',lastName: 'Palacios', email: '@elliana', image: 'https://images.unsplash.com/photo-1504735217152-b768bcab5ebc?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=0ec8291c3fd2f774a365c8651210a18b'),
-    User(firstName: 'Kayley',lastName: 'Dwyer', email: '@kayley',image: 'https://images.unsplash.com/photo-1503467913725-8484b65b0715?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=cf7f82093012c4789841f570933f88e3'),
-    User(firstName: 'Kathleen',lastName: 'Mcdonough',email: '@kathleen',image: 'https://images.unsplash.com/photo-1507081323647-4d250478b919?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=b717a6d0469694bbe6400e6bfe45a1da'),
-    User(firstName: 'Kathleen',lastName: 'Dyer', email: '@kathleen',image: 'https://images.unsplash.com/photo-1502980426475-b83966705988?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=ddcb7ec744fc63472f2d9e19362aa387'),
-    User(firstName: 'Mikayla',lastName: 'Marquez',email: '@mikayla', image: 'https://images.unsplash.com/photo-1541710430735-5fca14c95b00?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ'),
-    User(firstName: 'Kiersten',lastName: 'Lange', email: '@kiersten', image: 'https://images.unsplash.com/photo-1542534759-05f6c34a9e63?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ'),
-    User(firstName: 'Carys',lastName: 'Metz', email: '@metz', image: 'https://images.unsplash.com/photo-1516239482977-b550ba7253f2?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ'),
-    User(firstName: 'Ignacio', lastName: 'Schmidt',email: '@schmidt',image: 'https://images.unsplash.com/photo-1542973748-658653fb3d12?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ'),
-    User(firstName: 'Clyde',lastName: 'Lucas',email: '@clyde',image: 'https://images.unsplash.com/photo-1569443693539-175ea9f007e8?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ'),
-    User(firstName: 'Mikayla',lastName: 'Marquez', email: '@mikayla',image: 'https://images.unsplash.com/photo-1541710430735-5fca14c95b00?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&ixid=eyJhcHBfaWQiOjE3Nzg0fQ')
-  ];
+  List<User> _users = [];
 
 
   List<User> _foundedUsers = [];
-
+  String roomId = "";
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
+    getListFriend();
+  }
+  getListFriend() async{
+     _users = await getAllFriend(auth.FirebaseAuth.instance.currentUser!.uid);
     setState(() {
       _foundedUsers = _users;
     });
   }
-
   onSearch(String search) {
     setState(() {
       _foundedUsers = _users.where((user) => user.firstName!.toLowerCase().contains(search)).toList();
@@ -124,7 +118,13 @@ class _MessageState extends State<Message> {
   }
 
   userComponent({required User user}) {
-    return Container(
+    return InkWell(onTap: (){
+      getRoomChat(user.id!);
+      if(roomId!=""){
+          Navigator.push(context, MaterialPageRoute(builder: (context)=> MyChat(userMap: user,chatRoomId: roomId,)));
+      }
+      
+    },child:Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.only(top: 10, bottom: 10),
       child: Row(
@@ -132,14 +132,18 @@ class _MessageState extends State<Message> {
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 50,
-                height: 50,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: Image.network(user.image!),
-                )
-              ),
+               Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image:  NetworkImage('${user.image}'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +177,11 @@ class _MessageState extends State<Message> {
           // )
         ],
       ),
-    );
+    ));
+  }
+  getRoomChat(String userid) async{
+      roomId =  await getRoomChatByUser(userid,auth.FirebaseAuth.instance.currentUser!.uid);
+     
   }
 }
 

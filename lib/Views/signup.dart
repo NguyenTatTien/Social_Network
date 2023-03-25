@@ -4,11 +4,13 @@ import 'dart:async';
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
+import 'package:do_an_tot_nghiep/Views/VerityEmail.dart';
 import 'package:do_an_tot_nghiep/Views/bezierContainer.dart';
 import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 
 
@@ -27,6 +29,8 @@ class _SignUpPageState extends State<SignUpPage> {
   var controllerConfirmPassword = TextEditingController();
   var controllerEmail = TextEditingController();
   var controllerPassword = TextEditingController();
+  var controllerFirstName = TextEditingController();
+  var controllerLastName = TextEditingController();
   Widget _backButton() {
     return InkWell(
       onTap: () {
@@ -65,12 +69,31 @@ class _SignUpPageState extends State<SignUpPage> {
   }
   // ignore: non_constant_identifier_names
    Future SignUp() async{
-    if(controllerPassword.text==controllerConfirmPassword.text){
-      var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
-      
-      User user = User(id: usercreate.user!.uid,firstName:"",lastName: "",email:controllerEmail.text,password: controllerPassword.text,createDate:null,phoneNumber: "",image: "");
-      CreateData("User",user);
+    if(controllerEmail.text!=""&&controllerFirstName.text!=""&&controllerLastName.text!=""&&controllerConfirmPassword.text!=""&&controllerPassword.text!=""){
+      if(controllerPassword.text==controllerConfirmPassword.text){
+            if(await checkUserByEmail(controllerEmail.text)){
+              Fluttertoast.showToast(msg: "Email này đã được sử dụng!");
+            }
+            else{
+              var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
+              User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
+              CreateData("User",user);
+              Navigator.push(context, MaterialPageRoute(builder: (context)=> VerityEmail()));
+              
+            }
+            // var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
+            
+            // User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
+            // CreateData("User",user);
+      }
+      else{
+        Fluttertoast.showToast(msg: "Vui lòng nhập lại mật khẩu chính xác!");
+      }
     }
+    else{
+      Fluttertoast.showToast(msg: "Vui lòng nhập đầy đủ thông tin!");
+    }
+   
   }
   Widget _submitButton() {
     return InkWell(onTap: (){
@@ -160,9 +183,14 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _emailPasswordWidget() {
     return Column(
       children: <Widget>[
+        Row(children: [
+           Expanded(child:Container(margin: EdgeInsets.only(right: 5),child:_entryField("Tên",controllerFirstName)),flex: 1,),
+          
+           Expanded(child:Container(margin: EdgeInsets.only(left: 5),child:_entryField("Họ",controllerLastName)),flex: 1,),
+        ],),
         _entryField("Email",controllerEmail),
-        _entryField("Password",controllerPassword, isPassword: true),
-        _entryField("ConfirmPassword",controllerConfirmPassword,isPassword: true),
+        _entryField("Mật khẩu",controllerPassword, isPassword: true),
+        _entryField("Nhập lại mật khẩu",controllerConfirmPassword,isPassword: true),
       ],
     );
   }

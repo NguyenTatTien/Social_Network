@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 
 class User {
@@ -9,10 +11,13 @@ class User {
   String? email;
   String? phoneNumber;
   String? address;
+  String? birthDay;
   DateTime? createDate;
+  bool? status;
+  String? token;
   
   // ignore: invalid_required_positional_param
-  User({this.id,this.firstName, this.lastName,this.email,this.image,this.phoneNumber,this.address,this.password,this.createDate});
+  User({this.id,this.firstName, this.lastName,this.email,this.image,this.phoneNumber,this.birthDay,this.address,this.password,this.createDate,this.status});
     User.fromJson(Map<String, dynamic> json)
       : id = json['Id'],
         email = json['Email'],
@@ -22,17 +27,23 @@ class User {
         password = json['Password'],
         phoneNumber = json['PhoneNumber'],
         address = json['Address'],
-        createDate = json['CreateDate'];
+        birthDay = json['BirthDay'],
+        status = json['Status'],
+        token = json['Token'],
+        createDate = json['CreateDate'].toDate();
         
   Map<String, dynamic> toJson() => {
         'Id': id,
         'Image': image,
         'FirstName':firstName,
         'LastName':lastName,
-        'Passwor':password,
+        'Password':password,
         'Email':email,
         "PhoneNumber":phoneNumber,
         "Address":address,
-        'CreateDate':createDate
+        "BirthDay":birthDay,
+        'CreateDate':createDate,
+        'Status':status,
+        'Token':token
       };
 }
