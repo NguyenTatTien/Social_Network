@@ -16,16 +16,28 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage> {
   var listNotification = <Map<String,Object>>[];
+  var lastData;
+  var scrollController =ScrollController();
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getAllNotification();
+    scrollController.addListener(scrollListener);
+    
+  }
+  void scrollListener() async{
+    if(scrollController.position.pixels==scrollController.position.maxScrollExtent){
+        listNotification.addAll(await getAllNotificationByUser(auth.FirebaseAuth.instance.currentUser!.uid,lastData));
+        setState(() {
+          listNotification;
+        });
+    }
     
   }
   void getAllNotification() async{
-    listNotification = await getAllNotificationByUser(auth.FirebaseAuth.instance.currentUser!.uid);
-    print(listNotification.length);
+    listNotification = await getAllNotificationByUser(auth.FirebaseAuth.instance.currentUser!.uid,lastData);
+   
     setState(() {
       listNotification;
     });
@@ -43,6 +55,7 @@ class _NotificationPageState extends State<NotificationPage> {
         // ignore: prefer_is_empty
         child: listNotification.length > 0 ? ListView.builder(
           itemCount: listNotification.length,
+          controller: scrollController,
           itemBuilder: (context, index) {
             return Slidable(
               actionPane: const SlidableDrawerActionPane(),

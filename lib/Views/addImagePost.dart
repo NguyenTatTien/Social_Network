@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:do_an_tot_nghiep/Models/Post.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -22,7 +23,7 @@ class addImagePost extends StatelessWidget {
               {
                 pickFiles = result.files.first;
                 // ignore: curly_braces_in_flow_control_structures, use_build_context_synchronously
-                Navigator.push(context, MaterialPageRoute(builder: (context)=> EditorText(pickFiles!.path)));
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> EditorText(pickFiles!.path,new Post())));
               }
             },child: const Text("Upload image"),),
     ),);

@@ -1,9 +1,12 @@
 
 
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an_tot_nghiep/Models/Call.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/CommentPost.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
@@ -11,6 +14,7 @@ import 'package:do_an_tot_nghiep/Models/Like.dart';
 import 'package:do_an_tot_nghiep/Models/Notification.dart';
 import 'package:do_an_tot_nghiep/Models/Post.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +34,7 @@ import 'package:intl/intl.dart';
     await documentReference.set(json);
   }
   // ignore: non_constant_identifier_names
-  Future<List<Map<String,Object>>> listPost(String collection,String id) async{
+  Future<List<Map<String,Object>>> listPost(String collection,String id,var data) async{
        var lsPost = <Post>[];
        var lsUserByPost = <User>[]; 
        var listObject = <Map<String,Object>>[];
@@ -52,13 +56,32 @@ import 'package:intl/intl.dart';
             
           });
       });   
-      
-    await FirebaseFirestore.instance.collection(collection).orderBy("CreateDate",descending: true).get().then((value){value.docs.forEach((result){
+     
+      // igno
+      //varre: unnecessary_null_comparison
+      if(data==null){
+          await FirebaseFirestore.instance.collection(collection).orderBy("CreateDate",descending: true).limit(3).get().then((value){value.docs.forEach((result){
+          print(result.data());
         if(lsFriendShipId.contains(Post.fromJson(result.data()).createBy)){
+        
             lsPost.add(Post.fromJson(result.data()));
         }
         
-    });});  
+    });}); 
+      }
+      else{
+         await FirebaseFirestore.instance.collection(collection).orderBy("CreateDate",descending: true).startAfter([data]).limit(3).get().then((value){value.docs.forEach((result){
+          print(result.data());
+        if(lsFriendShipId.contains(Post.fromJson(result.data()).createBy)){
+        
+            lsPost.add(Post.fromJson(result.data()));
+        }
+        
+    });}); 
+      }
+      //Stopwatch stopwatch = new Stopwatch()..start();
+  
+    //print('doSomething() executed in ${stopwatch.elapsed}'); 
    for(var post in lsPost){
           List<Like> likePosts = [];
           var docSnapshot =  await FirebaseFirestore.instance.collection("User").doc(post.createBy).get();
@@ -88,7 +111,7 @@ import 'package:intl/intl.dart';
      }
      
   }
-  Future<List<Map<String,Object>>> getlistOthers(String id) async{
+  Future<List<Map<String,Object>>> getlistOthers(String id,var lastData) async{
     var lsFriendShip = <FriendShip>[];
     var listObject = <Map<String,Object>>[];
      await FirebaseFirestore.instance.collection("FriendShip").where("Requester",isEqualTo: id).get().then((value){
@@ -102,28 +125,54 @@ import 'package:intl/intl.dart';
             lsFriendShip.add(FriendShip.fromJson(result.data()));
           });
       });
-      await FirebaseFirestore.instance.collection("User").where("Id",isNotEqualTo: id).get().then((value){
-          value.docs.forEach((result){
-            var user = User.fromJson(result.data());
-            if(lsFriendShip.where((element) => element.addressee==user.id||element.requester==user.id).toList().isNotEmpty){
-                if(lsFriendShip.firstWhere((element) => element.addressee==user.id||element.requester==user.id).status==false){
-                    if(lsFriendShip.where((element) => element.addressee==user.id).isNotEmpty){
-                         listObject.add({"user":user,"status":1});
-                    }
-                    else if(lsFriendShip.where((element) => element.requester==user.id).isNotEmpty){
-                        listObject.add({"user":user,"status":2});
-                    }
-                }
-                else{
-                  listObject.add({"user":user,"status":3});
-                }
-            }
-            else{
-              listObject.add({"user":user,"status":0});
-            }
-          });
-      });
+      if(lastData==null){
+        await FirebaseFirestore.instance.collection("User").where("Id",isNotEqualTo: id).orderBy("Id",descending: true).limit(10).get().then((value){
+                value.docs.forEach((result){
+                  var user = User.fromJson(result.data());
+                  if(lsFriendShip.where((element) => element.addressee==user.id||element.requester==user.id).toList().isNotEmpty){
+                      if(lsFriendShip.firstWhere((element) => element.addressee==user.id||element.requester==user.id).status==false){
+                          if(lsFriendShip.where((element) => element.addressee==user.id).isNotEmpty){
+                              listObject.add({"user":user,"status":1});
+                          }
+                          else if(lsFriendShip.where((element) => element.requester==user.id).isNotEmpty){
+                              listObject.add({"user":user,"status":2});
+                          }
+                      }
+                      else{
+                        listObject.add({"user":user,"status":3});
+                      }
+                  }
+                  else{
+                    listObject.add({"user":user,"status":0});
+                  }
+                });
+            });
      
+      }else{
+            await FirebaseFirestore.instance.collection("User").where("Id",isNotEqualTo: id).orderBy("Id",descending: true).startAfter([lastData]).limit(5).get().then((value){
+            value.docs.forEach((result){
+              var user = User.fromJson(result.data());
+              if(lsFriendShip.where((element) => element.addressee==user.id||element.requester==user.id).toList().isNotEmpty){
+                  if(lsFriendShip.firstWhere((element) => element.addressee==user.id||element.requester==user.id).status==false){
+                      if(lsFriendShip.where((element) => element.addressee==user.id).isNotEmpty){
+                          listObject.add({"user":user,"status":1});
+                      }
+                      else if(lsFriendShip.where((element) => element.requester==user.id).isNotEmpty){
+                          listObject.add({"user":user,"status":2});
+                      }
+                  }
+                  else{
+                    listObject.add({"user":user,"status":3});
+                  }
+              }
+              else{
+                listObject.add({"user":user,"status":0});
+              }
+            });
+        });
+     
+      }
+    
       
       return listObject;
   }
@@ -201,16 +250,25 @@ import 'package:intl/intl.dart';
     return chatRoom;
 
   }
-  Future<List<Map<String,Object>>>getAllNotificationByUser(String userID) async{
+  Future<List<Map<String,Object>>>getAllNotificationByUser(String userID,var lastData) async{
     var listNotification = <Map<String,Object>>[];
-
-       await FirebaseFirestore.instance.collection("Notification").orderBy("CreateDate",descending: true).get().then((value) => value.docs.where((element) => NotificationObject.fromJson(element.data()).receiver==userID).forEach((element) { 
-          listNotification.add({"notification":NotificationObject.fromJson(element.data()),"sender":User()});
-       }));
-       for(var item in listNotification){
-          item['sender'] = await getUserById((item['notification'] as NotificationObject).sender!);
-       }
-       print(listNotification.length);
+      if(lastData==null){
+        await FirebaseFirestore.instance.collection("Notification").orderBy("CreateDate",descending: true).limit(10).get().then((value) => value.docs.where((element) => NotificationObject.fromJson(element.data()).receiver==userID).forEach((element) { 
+              listNotification.add({"notification":NotificationObject.fromJson(element.data()),"sender":User()});
+              }));
+              
+      }
+      else{
+        await FirebaseFirestore.instance.collection("Notification").orderBy("CreateDate",descending: true).startAfter([lastData]).limit(5).get().then((value) => value.docs.where((element) => NotificationObject.fromJson(element.data()).receiver==userID).forEach((element) { 
+              listNotification.add({"notification":NotificationObject.fromJson(element.data()),"sender":User()});
+        }));
+              
+      }
+      for(var item in listNotification){
+                  item['sender'] = await getUserById((item['notification'] as NotificationObject).sender!);
+              }
+      
+      
        return listNotification;
   }
   Future<bool> checkUserByEmail(String email)async {
@@ -246,10 +304,66 @@ import 'package:intl/intl.dart';
    }
     return listObject;
   }
-  Future<bool> checkFriend(String user1, String user2)async{
-       bool check = false;
+  Future<int> checkFriend(String user1, String user2)async{
+       int check = 0;
      // ignore: await_only_futures, unrelated_type_equality_checks
-     await FirebaseFirestore.instance.collection("FriendShip").where("Status",isEqualTo: true).get().then((value) => value.docs.where((element) =>check =  (FriendShip.fromJson(element.data()).addressee==user1&& FriendShip.fromJson(element.data()).requester==user2||(FriendShip.fromJson(element.data()).addressee==user2&&FriendShip.fromJson(element.data()).requester==user1))).isNotEmpty ? true: false);
+     await FirebaseFirestore.instance.collection("FriendShip").get().then((value)
+      => check = value.docs.where((element)
+=>(FriendShip.fromJson(element.data()).addressee==user1&& FriendShip.fromJson(element.data()).requester==user2 && FriendShip.fromJson(element.data()).status == true ||(FriendShip.fromJson(element.data()).addressee==user2&&FriendShip.fromJson(element.data()).requester==user1 && FriendShip.fromJson(element.data()).status == true))).isNotEmpty 
+? 3
+: value.docs.where((element)
+=>(FriendShip.fromJson(element.data()).addressee==user1&& FriendShip.fromJson(element.data()).requester==user2 && FriendShip.fromJson(element.data()).status == false)).isNotEmpty
+?2
+:value.docs.where((element)
+=>(FriendShip.fromJson(element.data()).addressee==user2&& FriendShip.fromJson(element.data()).requester==user1 && FriendShip.fromJson(element.data()).status == false)).isNotEmpty?1:0);
      return check;
+  }
+  Future<bool> makeCall(Call call) async{
+    try{
+    call.hasDialled = true;
+    call.id = call.callerId;
+    Map<String,dynamic> hasDialledMap = call.toJson();
+    call.id = call.receiverId;
+    call.hasDialled = false;
+    Map<String,dynamic> hasNotDialledMap = call.toJson();
+    await FirebaseFirestore.instance.collection("Call").doc(call.callerId).set(hasDialledMap);
+    await FirebaseFirestore.instance.collection("Call").doc(call.receiverId).set(hasNotDialledMap);
+      return true;
+    }catch(e){
+        print(e);
+        return false;
+    }
+  }
+  Future<bool> endCall(Call call) async{
+    try{
+      await FirebaseFirestore.instance.collection("Call").doc(call.callerId).delete();
+    await FirebaseFirestore.instance.collection("Call").doc(call.receiverId).delete();
+    return true; 
+    }catch(e){
+      return false;
+    }
+  }
+  Stream<DocumentSnapshot> callStream(String id)=> FirebaseFirestore.instance.collection("Call").doc(id).snapshots();
+  Future<Like> checkLike(String userId, String postId) async{
+  var like = Like();
+   await FirebaseFirestore.instance.collection("LikePost").where("UserId",isEqualTo: userId).where("PostId",isEqualTo: postId).get().then((value) => value.docs.isNotEmpty?value.docs.forEach((element) {
+      like = Like.fromJson(element.data());
+    }):like=Like());
+    return like;
+  }
+  updateLikePost(Like likePost) async{
+      await FirebaseFirestore.instance.collection("LikePost").doc(likePost.id).update(likePost.toJson());
+  }
+  removePostById(String id) async{
+      await FirebaseFirestore.instance.collection("Post").doc(id).delete();
+      await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: id).snapshots().forEach((element) {element.docs.clear(); });
+      await FirebaseFirestore.instance.collection("Comment").where("PostId",isEqualTo: id).get().then((value) => value.docs.clear());
+  }
+  Future<String> updateImageByPost(String url,String path,File file)async{
+      await FirebaseStorage.instance.refFromURL(url).delete();
+      var chilPath = await FirebaseStorage.instance.ref().child(path);
+      chilPath.putFile(file);
+       String urlImage = await chilPath.getDownloadURL();
+      return urlImage;
   }
    

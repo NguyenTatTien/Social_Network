@@ -157,13 +157,13 @@ class _LoginPageState extends State<LoginPage> {
             flex: 1,
             child: Container(
               decoration: const BoxDecoration(
-                color: Color(0xff1959a9),
+                color: Color.fromARGB(255, 239, 219, 40),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     topLeft: Radius.circular(5)),
               ),
               alignment: Alignment.center,
-              child: const Text('f',
+              child: const Text('G',
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 25,
@@ -174,15 +174,15 @@ class _LoginPageState extends State<LoginPage> {
             flex: 5,
             child: Container(
               decoration: const BoxDecoration(
-                color: Color(0xff2872ba),
+                color: Color.fromARGB(255, 224, 224, 223),
                 borderRadius: BorderRadius.only(
                     bottomRight: Radius.circular(5),
                     topRight: Radius.circular(5)),
               ),
               alignment: Alignment.center,
-              child: const Text('Log in with Facebook',
+              child: const Text('Log in with Google',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: Color.fromARGB(255, 14, 0, 0),
                       fontSize: 18,
                       fontWeight: FontWeight.w400)),
             ),
@@ -229,7 +229,7 @@ class _LoginPageState extends State<LoginPage> {
     return RichText(
       textAlign: TextAlign.center,
       text: const TextSpan(
-          text: 'd',
+          text: 'S',
           style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w700,
@@ -237,11 +237,11 @@ class _LoginPageState extends State<LoginPage> {
           ),
           children: [
             TextSpan(
-              text: 'ev',
+              text: 'ign',
               style: TextStyle(color: Colors.black, fontSize: 30),
             ),
             TextSpan(
-              text: 'rnz',
+              text: 'in',
               style: TextStyle(color: mainColor, fontSize: 30),
             ),
           ]),

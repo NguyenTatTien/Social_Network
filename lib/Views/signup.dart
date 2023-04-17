@@ -7,6 +7,7 @@ import 'package:do_an_tot_nghiep/Views/Design.dart';
 import 'package:do_an_tot_nghiep/Views/VerityEmail.dart';
 import 'package:do_an_tot_nghiep/Views/bezierContainer.dart';
 import 'package:do_an_tot_nghiep/Views/loginPage.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import 'package:flutter/material.dart';
@@ -70,24 +71,34 @@ class _SignUpPageState extends State<SignUpPage> {
   // ignore: non_constant_identifier_names
    Future SignUp() async{
     if(controllerEmail.text!=""&&controllerFirstName.text!=""&&controllerLastName.text!=""&&controllerConfirmPassword.text!=""&&controllerPassword.text!=""){
-      if(controllerPassword.text==controllerConfirmPassword.text){
+      if(EmailValidator.validate(controllerEmail.text)){
+        if(controllerPassword.text==controllerConfirmPassword.text){
             if(await checkUserByEmail(controllerEmail.text)){
               Fluttertoast.showToast(msg: "Email này đã được sử dụng!");
             }
             else{
-              var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
-              User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
-              CreateData("User",user);
-              Navigator.push(context, MaterialPageRoute(builder: (context)=> VerityEmail()));
-              
+              try{
+                var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
+               await Navigator.push(context, MaterialPageRoute(builder: (context)=> VerityEmail()));
+                User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
+                CreateData("User",user);
+              }
+              catch(e){
+                Fluttertoast.showToast(msg: "Email không tồn tại!");
+                this.dispose();
+              }
             }
             // var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
             
             // User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
             // CreateData("User",user);
       }
+        else{
+          Fluttertoast.showToast(msg: "Vui lòng nhập lại mật khẩu chính xác!");
+        }
+      }
       else{
-        Fluttertoast.showToast(msg: "Vui lòng nhập lại mật khẩu chính xác!");
+         Fluttertoast.showToast(msg: "Vui lòng nhập đúng định dạng email!");
       }
     }
     else{
@@ -160,7 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return RichText(
       textAlign: TextAlign.center,
       text: const TextSpan(
-          text: 'd',
+          text: 'S',
           style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w700,
@@ -169,11 +180,11 @@ class _SignUpPageState extends State<SignUpPage> {
 
           children: [
             TextSpan(
-              text: 'ev',
+              text: 'ign',
               style: TextStyle(color: Colors.black, fontSize: 30),
             ),
             TextSpan(
-              text: 'rnz',
+              text: 'up',
               style: TextStyle(color: mainColor, fontSize: 30),
             ),
           ]),

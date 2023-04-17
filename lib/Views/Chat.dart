@@ -5,11 +5,15 @@ import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
+import 'package:do_an_tot_nghiep/Services/Premissiond.dart';
+import 'package:do_an_tot_nghiep/Views/CallUtils.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import 'package:uuid/uuid.dart';
 
@@ -39,11 +43,12 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
   var _message = TextEditingController();
   var scrollController = ScrollController();
   var message = '';
+  User myUser = User();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
   File? imageFile;
-  
-
+  DateTime? timeMessage;
+  bool rev = false;
 // The location of the SignalR Server.
 // ignore: unnecessary_new
   MyChatState(this.chatRoomId,this.userMap);
@@ -53,19 +58,24 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     setStatus(true);
-   
+   WidgetsBinding.instance.addPostFrameCallback((_){
+                    scrollToBottom();
+                      // Add Your Code here.
+
+  });
     
   }
   void setStatus(bool status) async {
+    myUser = await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
     ChatRoom chatRoom = await getObjectRoomChatByUser(_auth.currentUser!.uid, userMap.id!);
     if(chatRoom.userFirst==auth.FirebaseAuth.instance.currentUser!.uid){
-      print("a");
+     
       await _firestore.collection('ChatRoom').doc(chatRoomId).update({
             "StatusUserFirst": status,
           });
     }
     else{
-      print("b");
+    
         await _firestore.collection('ChatRoom').doc(chatRoomId).update({
             "StatusUserSecond": status,
           });
@@ -80,11 +90,12 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
   }
     // ignore: override_on_non_overriding_member
   
-  void scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 1000)).then((_) {
+  void scrollToBottom(){
+    Future.delayed(Duration.zero).then((_) {
       if (!scrollController.hasClients) return;
       
-        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+       
+        //scrollController.jumpTo(scrollController.position.maxScrollExtent);
     });
   }
    Future getImage() async {
@@ -134,13 +145,13 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
           .collection('Message')
           .doc(fileName)
           .update({"Message": imageUrl});
-      setState(() {
-         scrollController.jumpTo(scrollController.position.maxScrollExtent);
-      });
-      User user = await getUserById(_auth.currentUser!.uid);
+      // setState(() {
+      //    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      // });
+      
       ChatRoom chatRoom = await getObjectRoomChatByUser(_auth.currentUser!.uid, userMap.id!);
        if((chatRoom.userFirst==userMap.id && chatRoom.statusUserFirst != true) || (chatRoom.userSecond==userMap.id && chatRoom.statusUserSecond != true) ){
-          await PushNotification.sendPushNotification(user, "${user.firstName} ${user.lastName} đã gửi bạn một ảnh mới!",userMap.token!);
+          await PushNotification.sendPushNotification(myUser, "${myUser.firstName} ${myUser.lastName} đã gửi bạn một ảnh mới!",userMap.token!);
        }
     }
   }
@@ -160,13 +171,13 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
           .doc(chatRoomId)
           .collection('Message')
           .add(messages);
-       setState(() {
-         scrollController.jumpTo(scrollController.position.maxScrollExtent);
-       });
-       User user = await getUserById(_auth.currentUser!.uid);
+      //  setState(() {
+      //    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      //  });
+     
        ChatRoom chatRoom = await getObjectRoomChatByUser(_auth.currentUser!.uid, userMap.id!);
       if((chatRoom.userFirst==userMap.id && chatRoom.statusUserFirst != true) || (chatRoom.userSecond==userMap.id && chatRoom.statusUserSecond != true) ){
-        await PushNotification.sendPushNotification(user, messageChat,userMap.token!);
+        await PushNotification.sendPushNotification(myUser, messageChat,userMap.token!);
       }
       
     
@@ -293,6 +304,10 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
     final size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
+        actions: [Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: InkWell(onTap: () async => await Permissions.cameraAndMicrophonePermissionsGranted()? CallUtils.dial(from:myUser, to: userMap,context: context):{},child:Icon(Icons.videocam_rounded)),
+          ),],
         backgroundColor: mainColor,
         title: StreamBuilder<DocumentSnapshot>(
           stream:
@@ -317,6 +332,7 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
           },
         ),
       ),
+      
       body: SingleChildScrollView(
         
         child: Column(
@@ -330,22 +346,44 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
                     .collection('ChatRoom')
                     .doc(chatRoomId)
                     .collection('Message')
-                    .orderBy("CreateDate", descending: false)
+                    .orderBy("CreateDate", descending: true).limit(30)
                     .snapshots(),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (snapshot.data != null) {
-                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                        scrollToBottom();
-                      });
+                  if (snapshot.data != null){
+                    var listTime = [];
+                    for(int i = 0 ;i<snapshot.data!.docs.length;i++){
+                      if(i<snapshot.data!.docs.length-1){
+                      
+                         if(((snapshot.data!.docs[(i)].data() as Map<String, dynamic>)["CreateDate"].toDate() as DateTime).difference((snapshot.data!.docs[i+1].data() as Map<String, dynamic>)["CreateDate"].toDate() as DateTime).inMinutes>30){
+                          listTime.add((snapshot.data!.docs[i].data() as Map<String, dynamic>)["CreateDate"].toDate().toString());
+                        
+                         }
+                         else{
+                          listTime.add("");
+                          
+                         }
+                      }
+                      else{
+                        listTime.add("");
+                        
+                      }
+                    }
+                                        
+                    
                     return ListView.builder(
                       controller: scrollController,
+                      reverse: true,
+                      shrinkWrap: true,
                       itemCount: snapshot.data!.docs.length,
                       itemBuilder: (context, index) {
+                        
                         Map<String, dynamic> map = snapshot.data!.docs[index]
                             .data() as Map<String, dynamic>;
-                        
-                        return messages(size, map, context);
+                       
+                        return Column(children: [  
+                          listTime[index]!=""?Center(child: Text(DateTime.now().difference(map['CreateDate'].toDate() as DateTime).inDays==0?DateFormat("HH:mm").format(map['CreateDate'].toDate())+", Hôm nay": DateFormat("HH:mm, dd/MM/yyyy").format(map['CreateDate'].toDate())),):Container(),
+                          messages(size, map, context)]);
                       },
                     );
                   } else {
@@ -397,9 +435,12 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
       ),
     );
   }
-Widget messages(Size size, Map<String, dynamic> map, BuildContext context) {
-    return map['Type'] == "text"
-        ? Container(
+  
+ Widget messages(Size size, Map<String, dynamic> map, BuildContext context) {
+    timeMessage=map["CreateDate"].toDate();
+    return
+    map['Type'] == "text"
+        ?Container(
             width: size.width,
             alignment: map['SendById'] == _auth.currentUser!.uid
                 ? Alignment.centerRight
@@ -450,6 +491,7 @@ Widget messages(Size size, Map<String, dynamic> map, BuildContext context) {
               ),
             ),
           );
+    
   }
 }
 

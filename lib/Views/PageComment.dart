@@ -13,8 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../Models/Like.dart';
+import '../Models/ReactionElement.dart';
 
 // ignore: must_be_immutable
 class PageComment extends StatefulWidget {
@@ -30,29 +32,52 @@ class _PageCommentState extends State<PageComment> {
   String parentId ="";
   User userReceiver= User();
   User user = User();
+  bool _reactionView = false;
   List<Map<String,Object>>? jsonListComment = <Map<String,Object>>[];
    final formKey = GlobalKey<FormState>();
    final TextEditingController commentController = TextEditingController();
-  _PageCommentState(this.jsonPost);
-  likePost(Post post) async{
-    post.likeCount=post.likeCount! + 1;
-    updatePost(post);
-    Like like = Like(id: "",postId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,createDate: DateTime.now());
-    CreateNewData("LikePost", like);
-     if(post.createBy != auth.FirebaseAuth.instance.currentUser!.uid){
-       User user= await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
-       NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã thích một bài viết của bạn",receiver: post.createBy,createDate: DateTime.now(),idObject: post.id,sender: user.id);
-       CreateNewData("Notification", notification);
-       User userPost = await getUserById(post.createBy!);
-       PushNotification.sendPushNotification(User(),"${user.firstName} ${user.lastName} đã thích một bài viết của bạn",userPost.token!);
+    List<ReactionElement> reactions= [
+    ReactionElement("Like", Image.asset("assets/emoji/like.gif",width: 40,height: 40,)),
+    ReactionElement("Love", Image.asset("assets/emoji/love.gif",width: 40,height: 40,)),
+    ReactionElement("Haha", Image.asset("assets/emoji/haha.gif",width: 40,height: 40)),
+    ReactionElement("WOW", Image.asset("assets/emoji/wow.gif",width: 40,height: 40)),
+    ReactionElement("Sad", Image.asset("assets/emoji/sad.gif",width: 40,height: 40,)),
+    ReactionElement("Angry", Image.asset("assets/emoji/angry.gif",width: 40,height: 40)),
 
+  ];
+  _PageCommentState(this.jsonPost);
+  likePost(Post post,int index) async{
+    Like getlike = await checkLike(auth.FirebaseAuth.instance.currentUser!.uid,post.id!);
+    // ignore: unnecessary_null_comparison
+    if(getlike.id!=null){
+      getlike.type = index;
+      updateLikePost(getlike);
+      setState(() {
+        ((jsonPost!["listUserLikePost"]) as List<Like>).firstWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid).type=index;
+        _reactionView = false;
+      });
     }
-    setState(() {
-      (jsonPost!["post"] as Post).likeCount! + 1;
-      // ((posts.firstWhere((element) => (element["post"] as Post).id==id)["listUserLikePost"]) as List<Like>).remove((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
-      (jsonPost!["listUserLikePost"] as List<Like>).add(like);
-    });
-    
+    else{
+      
+        Like like = Like(id: "",postId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,createDate: DateTime.now());
+        post.likeCount=post.likeCount! + 1;
+        updatePost(post);
+        CreateNewData("LikePost", like);
+        if(post.createBy!=auth.FirebaseAuth.instance.currentUser!.uid){
+          User user= await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
+          NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã thích một bài viết của bạn",receiver: post.createBy,createDate: DateTime.now(),idObject: post.id,sender: user.id);
+          CreateNewData("Notification", notification);
+          User userPost = await getUserById(post.createBy!);
+          PushNotification.sendPushNotification(User(),"${user.firstName} ${user.lastName} đã thích một bài viết của bạn",userPost.token!);
+
+        }
+      setState(() {
+        (jsonPost!["post"] as Post).likeCount! + 1;
+        _reactionView = false;
+        // ((posts.firstWhere((element) => (element["post"] as Post).id==id)["listUserLikePost"]) as List<Like>).remove((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
+        (jsonPost!["listUserLikePost"] as List<Like>).add(like);
+      });
+    }
   }
   notLikePost(Post post){
     post.likeCount = post.likeCount! - 1;
@@ -145,7 +170,18 @@ class _PageCommentState extends State<PageComment> {
                   children: [
                     // ignore: avoid_unnecessary_containers
                   
-                    InkWell(child: const Icon(Icons.favorite,size: 20,color: Colors.pink,),onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==1).isNotEmpty)
+                    InkWell(child: getImage(1).icon,onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==2).isNotEmpty)
+                    InkWell(child: getImage(2).icon,onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==3).isNotEmpty)
+                    InkWell(child: getImage(3).icon,onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==4).isNotEmpty)
+                    InkWell(child: getImage(4).icon,onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==5).isNotEmpty)
+                    InkWell(child: getImage(5).icon,onTap: (){},),
+                    if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.type==6).isNotEmpty)
+                    InkWell(child: getImage(6).icon,onTap: (){},),
                           Container(margin: const EdgeInsets.only(left: 5),child: Text("${(jsonPost!["post"] as Post).likeCount}",style: TextStyle(fontSize: 13,color: Colors.black87),),)
                         ],
                       ),
@@ -172,19 +208,24 @@ class _PageCommentState extends State<PageComment> {
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
               if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isEmpty)
-                    InkWell(onTap: (){likePost((jsonPost!["post"] as Post));},child:  Row(
+                    InkWell(onTap: (){likePost((jsonPost!["post"] as Post),1);},onLongPress: (){setState(() {
+                        _reactionView = true;
+                      });},child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
-                          const Icon(Icons.favorite_border,size: 20,),
+                           getImage(0).icon,
+                         
                           Container(margin: const EdgeInsets.only(left: 5),child: const Text("Thích",style: TextStyle(fontSize: 13,color: Colors.black87),),)
                         ],
                       ),),
               if((jsonPost!["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isNotEmpty)
-                      InkWell(onTap: (){notLikePost((jsonPost!["post"] as Post));},child:  Row(
+                      InkWell(onTap: (){notLikePost((jsonPost!["post"] as Post));},onLongPress: (){setState(() {
+                        _reactionView = true;
+                      });},child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
-                          const Icon(Icons.favorite,size: 20,color: Colors.pink,),
-                          Container(margin: const EdgeInsets.only(left: 5),child: const Text("Thích",style: TextStyle(fontSize: 13,color: Colors.black87),),)
+                           getImage((jsonPost!["listUserLikePost"] as List<Like>).firstWhere((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).type!).icon,
+                          Container(margin: const EdgeInsets.only(left: 5),child: Text(getImage((jsonPost!["listUserLikePost"] as List<Like>).firstWhere((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).type!).typeString,style: TextStyle(fontSize: 13,color: Colors.black87),),)
                         ],
                       ),),
               InkWell(onTap: (){setState(() {
@@ -204,8 +245,54 @@ class _PageCommentState extends State<PageComment> {
               //   ],
               // )
             ],), const Divider(color: Color.fromARGB(95, 46, 46, 46),),
+             if(_reactionView)
+              Positioned(bottom: 50,left: 70,child:Opacity(opacity: 1,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(2, 2, 2, 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30.0),
+          border: Border.all(color: Colors.grey.shade300, width: 0.3),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey,
+                blurRadius: 5.0,
+                // LTRB
+                offset: Offset.lerp(Offset(0.0, 0.0), Offset(0.0, 0.5), 10.0)!),
+          ],
+        ),
+        width: 245.0,
+        height:40,
+    
+          child: AnimationLimiter(
+          child: ListView.builder(
+            itemCount: reactions.length,
+            padding: EdgeInsets.symmetric(vertical: 0),
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(width: 40,alignment: Alignment.center,margin: EdgeInsets.symmetric(vertical: 0),padding: EdgeInsets.symmetric(vertical: 0),child:  AnimationConfiguration.staggeredList(
+              
+                position: index,
+                duration: const Duration(milliseconds: 375),
+                child: SlideAnimation(
+                  
+                  verticalOffset: 20,
+                  
+                  child:FadeInAnimation(
+                  
+                    child: InkWell(child:reactions[index].icon,onTap: (){likePost((jsonPost!["post"] as Post),index+1);})
+                  ),
+                ),
+              ));})))),
+     ),
   for(int i = 0;i<jsonListComment!.length;i++)
-    Container(
+    commentView(i),
+    
+              ],),
+      );
+  }
+Widget commentView(int i){
+    return Container(
             child: CommentTreeWidget<Comment, Comment>(
               Comment(
                   userId: '${(jsonListComment![i]["userComment"] as User).id}',
@@ -378,9 +465,7 @@ class _PageCommentState extends State<PageComment> {
               },
             ),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          ),
-              ],),
-      );
+          );
   }
   @override
   Widget build(BuildContext context) {
@@ -434,6 +519,26 @@ class _PageCommentState extends State<PageComment> {
     });
     }
   }
+   ReactionElement getImage(int r){
+    switch(r){
+      case 1:
+        return ReactionElement("Thích",Image.asset("assets/emoji/ic_like_fill.png",width: 20,height: 20,));
+      case 2:
+        return ReactionElement("Yêu thích",Image.asset("assets/emoji/love2.png",width: 20,height: 20,));
+      case 3:
+        return ReactionElement("Haha",Image.asset("assets/emoji/haha2.png",width: 20,height: 20,));
+      case 4:
+        return ReactionElement("Buồn",Image.asset("assets/emoji/sad2.png",width: 20,height: 20,));
+      case 5:
+        return ReactionElement("Wow",Image.asset("assets/emoji/wow2.png",width: 20,height: 20,));
+      case 6:
+        return ReactionElement("Phẩn nộ",Image.asset("assets/emoji/angry2.png",width: 20,height: 20,));
+      default:
+        return ReactionElement("Thích",Image.asset("assets/emoji/ic_like.png",width: 20,height: 20,));
+    }
+  }
+
 
 }
+
 

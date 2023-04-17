@@ -25,6 +25,7 @@ import 'package:do_an_tot_nghiep/Views/mainpage.dart';
 import 'package:do_an_tot_nghiep/Views/meetup.dart';
 import 'package:do_an_tot_nghiep/Views/notification.dart';
 import 'package:do_an_tot_nghiep/Views/Guest.dart';
+import 'package:do_an_tot_nghiep/Views/pickupLayout.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -112,7 +113,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PickupLayout(scaffold: Scaffold(
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
@@ -208,6 +209,6 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
         //         ),
                             
        ],))
-       );
+       ));
   }
 }

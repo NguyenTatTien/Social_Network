@@ -1,24 +1,31 @@
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
+import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:do_an_tot_nghiep/Views/onboarding_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sql_conn/sql_conn.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 
 import 'Views/login.dart';
+int? initScreen=0;
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  initScreen = await prefs.getInt("initScreen");
+  await prefs.setInt("initScreen", 1);
+  runApp(MyApp(initScreen!));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  int initScreen;
+  MyApp(this.initScreen);
 
   // This widget is the root of your application.
   @override
@@ -70,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    
     requestPermission();
 
     loadFCM();
@@ -175,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return const OnboardingScreen();
+    return initScreen==0||initScreen==null? OnboardingScreen():LoginPage();
      
   }
 }

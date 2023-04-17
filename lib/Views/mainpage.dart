@@ -8,17 +8,22 @@ import 'package:google_fonts/google_fonts.dart';
 
 
 class MainPage extends StatelessWidget {
- 
+  static var scrollController = ScrollController();
   MainPage({super.key});
  
  
   @override
   Widget build(BuildContext context) {
-      
+       
         return Scaffold(
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
-          child: Column(
+          controller: scrollController,
+          child:Column(
+         
+          children: [
+            SizedBox(height: 220,child:Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(
                 height: 35,
@@ -81,11 +86,9 @@ class MainPage extends StatelessWidget {
                 padding: EdgeInsets.only(left: 0, right: 0),
                 
                 child: Divider(color: Color.fromARGB(95, 46, 46, 46),thickness: 5,),
-              ),
-              const SizedBox(
-                height: 0,
-              ),
-              FirstFeedIU(),
+              )])),
+             
+            FirstFeedIU(),
             
              
             ],

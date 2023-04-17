@@ -5,6 +5,8 @@ import 'package:csc_picker/csc_picker.dart';
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
+import 'package:do_an_tot_nghiep/Views/Profile.dart';
+import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 
@@ -27,7 +29,7 @@ class _EditProfileState extends State<EditProfile> {
   var controllerLastName = TextEditingController();
   var controllerEmail = TextEditingController();
   var controllerPhone = TextEditingController();
-
+  String address = ""; 
   var controllerPassword = TextEditingController();
   String countryValue = "";
   String stateValue="";
@@ -47,9 +49,13 @@ class _EditProfileState extends State<EditProfile> {
     controllerEmail.text = user!.email!;
     controllerPhone.text = user!.phoneNumber!;
     controllerPassword.text = user!.password!;
+    address = user!.address!;
     if(user!.birthDay.toString()!=""){
       birthDay = user!.birthDay!;
     }
+    setState(() {
+      address;
+    });
     
   }
     @override
@@ -64,7 +70,37 @@ class _EditProfileState extends State<EditProfile> {
     super.initState();
   
   }
-   Widget _entryField(String title,var controller, {bool isPassword = false}) {
+  Future showCustomDialog()=> showDialog(context: context, builder: (context)=>AlertDialog(
+    content:Container(height: 100,child:Expanded(flex: 3,child:CSCPicker(showStates: true,showCities: true,countryFilter: const [CscCountry.Vietnam,CscCountry.Vietnam,CscCountry.Vietnam],
+                  onCountryChanged:(value) {
+                 countryValue = value;
+      			
+                  },
+                   onStateChanged:(value) {
+                  
+                     stateValue = value!=null?value.toString():"";
+      		},
+           onCityChanged:(value) {
+                 
+                     cityValue = value!=null?value.toString():"";
+      		
+      		}
+                  ))),
+                  actions:[Expanded(child: ElevatedButton(onPressed: (){
+                    address = cityValue!="City"?cityValue+", "+stateValue+", "+countryValue :stateValue!="State"?stateValue+", "+countryValue:countryValue!="Viet Nam"?countryValue:"";
+                    setState(() {
+                      address;
+                    });
+                    Navigator.pop(context);
+                  }, child: Text("Lưu"))),
+                  Expanded(child: ElevatedButton(onPressed: (){Navigator.pop(context);}, child: Text("Thoát")))
+                  ] ,
+  ));
+   
+    
+
+
+Widget _entryField(String title,var controller, {bool isPassword = false}) {
     return Expanded(flex: 3,child: Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       child: 
@@ -87,7 +123,10 @@ class _EditProfileState extends State<EditProfile> {
           user!.password = controllerPassword.text;
           user!.birthDay = birthDay;
           // ignore: prefer_interpolation_to_compose_strings
-          user!.address = cityValue!="City"?cityValue+", "+stateValue+", "+countryValue :stateValue!="State"?stateValue+", "+countryValue:countryValue!="Viet Nam"?countryValue:"";
+          if(stateValue!="State"){
+            user!.address = address!=""?address:user!.address;
+          }
+          
           
   }
     @override
@@ -183,31 +222,19 @@ class _EditProfileState extends State<EditProfile> {
           const Expanded (child:Text("Số điện thoại:"),flex: 1,),
         _entryField("Nhập số điện thoại",controllerPhone)
        
-        
-        
-        
       ],),
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Expanded (child:Text("Địa chỉ:"),flex: 1,),
        
-        	Expanded(flex: 3,child:CSCPicker(showStates: true,showCities: true,countryFilter: const [CscCountry.Vietnam,CscCountry.Vietnam,CscCountry.Vietnam],
-                  onCountryChanged:(value) {
-                  
-                 countryValue = value;
+        	// Expanded(flex: 3,child:CSCPicker(showStates: true,showCities: true,countryFilter: const [CscCountry.Vietnam,CscCountry.Vietnam,CscCountry.Vietnam],
+          //         onCountryChanged:(value) {
+          //        countryValue = value;
+          
+              Expanded(child:InkWell(onTap: (){ showCustomDialog();},child:TextField(enabled: false,controller: TextEditingController(),decoration: InputDecoration(hintText: address,border: InputBorder.none,fillColor: Color(0xfff3f3f4),filled: true),)),flex: 3,)
       			
-      		},
-           onStateChanged:(value) {
-                  
-                     stateValue = value!=null?value.toString():"";
-      		},
-           onCityChanged:(value) {
-                 
-                     cityValue = value!=null?value.toString():"";
       		
-      		},
-          ),)
       ],),
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -250,6 +277,10 @@ class _EditProfileState extends State<EditProfile> {
           onPressed: () {
                 updateProfile();
                 updateData("User",user);
+                Navigator.pop(context);
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Profile(user!.id)));
+               
           },
           
           style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll(mainColor)), child: const Text("Lưu",style: TextStyle(fontSize: 17),)

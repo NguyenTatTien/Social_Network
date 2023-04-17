@@ -3,6 +3,8 @@ import 'dart:ffi';
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
+import 'package:do_an_tot_nghiep/Models/Notification.dart';
+import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
 import 'package:do_an_tot_nghiep/Views/message.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Views/Profile.dart';
@@ -25,15 +27,31 @@ class _GuestState extends State<Guest> {
 
   var _users = <Map<String,Object>>[];
   var _foundedUsers = <Map<String,Object>>[];
+  var myUser = User();
+  var scrollController = ScrollController();
+  var lastData;
   @override
   void initState() {
       getListUser();
     // TODO: implement initState
     super.initState();
+    scrollController.addListener(scrollListener);
+  }
+  void scrollListener()async{
+   if(scrollController.position.pixels == scrollController.position.maxScrollExtent){
+    lastData = (_users[_users.length-1]["user"] as User).id;
+    
+    _users.addAll(await getlistOthers(auth.FirebaseAuth.instance.currentUser!.uid,lastData));
+     _foundedUsers = _users;
+      setState(() {
+        _users;
+        _foundedUsers;
+      });
+    }
   }
 Future getListUser() async{
-
-   _users = await getlistOthers(auth.FirebaseAuth.instance.currentUser!.uid);
+  myUser = await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
+   _users = await getlistOthers(auth.FirebaseAuth.instance.currentUser!.uid,lastData);
     setState(() {
       _foundedUsers = _users;
     });
@@ -77,6 +95,7 @@ Future getListUser() async{
         // ignore: prefer_is_empty
         child: _foundedUsers.length > 0 ? ListView.builder(
           itemCount: _foundedUsers.length,
+          controller: scrollController,
           itemBuilder: (context, index) {
             return Slidable(
               actionPane: const SlidableDrawerActionPane(),
@@ -122,7 +141,7 @@ Future getListUser() async{
 
   userComponent({required Map<String,Object> user}) {
     return InkWell(onTap: (){
-    //  Navigator.push(context, MaterialPageRoute(builder: (context) => const Profile()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => Profile((user["user"] as User).id)));
             },
       child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -166,7 +185,7 @@ Future getListUser() async{
               )
             ]
           ),
-          GestureDetector(
+          InkWell(
             onTap: () {
 
                 user["status"]==0?sendRequestShip(user):user["status"]==2?agreeShip(user):user["status"]==1?deleteRequestShip(user):(){};
@@ -199,12 +218,15 @@ Future getListUser() async{
     ),);
   }
   
-  Future sendRequestShip(Map<String,Object> user) async{
+  sendRequestShip(Map<String,Object> user) async{
       await CreateNewData("FriendShip", FriendShip(id:"",requester: auth.FirebaseAuth.instance.currentUser!.uid,addressee: (user["user"] as User).id!,status: false));
       setState(() {
         user["status"] = 1;
       });
-      
+       NotificationObject notification = NotificationObject(id: "",content: "${myUser.firstName} ${myUser.lastName} đã gửi một yêu cầu kết bạn.",receiver:(user["user"] as User).id ,createDate: DateTime.now(),idObject: myUser.id,sender: myUser.id);
+       CreateNewData("Notification", notification);
+       
+       PushNotification.sendPushNotification(User(),"${myUser.firstName} ${myUser.lastName} đã gửi một yêu cầu kết bạn.",(user["user"] as User).token!);
   }
   
   deleteRequestShip(Map<String,Object> user) async{
@@ -221,6 +243,10 @@ Future getListUser() async{
     setState(() {
         user["status"] = 3;
       });
+      NotificationObject notification = NotificationObject(id: "",content: "${myUser.firstName} ${myUser.lastName} đã đồng ý kết bạn với bạn.",receiver:(user["user"] as User).id!,createDate: DateTime.now(),idObject: myUser.id,sender: myUser.id);
+       CreateNewData("Notification", notification);
+       
+      PushNotification.sendPushNotification(User(),"${myUser.firstName} ${myUser.lastName} đã đồng ý kết bạn với bạn.",(user["user"] as User).token!);
   }
 } 
 
