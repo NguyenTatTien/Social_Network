@@ -171,7 +171,7 @@ class _ProfileState extends State<Profile> {
   }
   removePost(String id){
     removePostById(id);
-    posts.remove((element) => (element["post"] as Post).id==id);
+    posts.removeWhere((element) => (element["post"] as Post).id==id);
     setState(() {
       posts;
     });

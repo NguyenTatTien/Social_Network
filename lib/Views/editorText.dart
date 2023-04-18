@@ -29,7 +29,14 @@ class _EditorTextState extends State<EditorText> {
    PlatformFile? pickFiles;
   _EditorTextState(this.url,this.post);
 
-  
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    if(post!.id!=null){
+      controlerText.text = post!.postContent!;
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(body: 
@@ -51,16 +58,17 @@ child: Column(
         ElevatedButton(
           onPressed: () async{
                final file = File(url!);
-               
               var firebaseStorage =  FirebaseStorage.instance.ref().child("image/${FirebaseAuth.instance.currentUser!.uid}/${DateTime.now().toString()}");
+             
               await firebaseStorage.putFile(file);
+              
               String urlImage = await firebaseStorage.getDownloadURL();
+              print(urlImage);
               Post post = Post(id: "",postContent: controlerText.text,postImage:urlImage ,commentCount: 0,likeCount: 0,createBy: FirebaseAuth.instance.currentUser!.uid,createDate: DateTime.now(),updatedDate:DateTime.now());
               CreateNewData("Post", post);
               // ignore: use_build_context_synchronously
               Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView()));
           },
-          
           child: const Text('Đăng bài'),
         ):Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -92,20 +100,16 @@ child: Column(
               if(file.isAbsolute){
                 String urlImage = await updateImageByPost(post!.postImage!, "image/${FirebaseAuth.instance.currentUser!.uid}/${DateTime.now().toString()}",file);
                 post!.postImage = urlImage;
-
               }
               post!.postContent = controlerText.text;
             updatePost(post!);
               // ignore: use_build_context_synchronously
               Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView()));
           },
-          
           child: const Text('Lưu thay đổi'),
         )
         ],),
       ),
-    
-
     );
   }
 }

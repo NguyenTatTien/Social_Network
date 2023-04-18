@@ -355,9 +355,21 @@ import 'package:intl/intl.dart';
       await FirebaseFirestore.instance.collection("LikePost").doc(likePost.id).update(likePost.toJson());
   }
   removePostById(String id) async{
+      List<Like> listLikes = <Like>[];
+      List<CommentPost> comments = <CommentPost>[];
       await FirebaseFirestore.instance.collection("Post").doc(id).delete();
-      await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: id).snapshots().forEach((element) {element.docs.clear(); });
-      await FirebaseFirestore.instance.collection("Comment").where("PostId",isEqualTo: id).get().then((value) => value.docs.clear());
+      await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: id).get().then((value) => value.docs.forEach((element) {
+        listLikes.add(Like.fromJson(element.data()));
+      }));
+      await FirebaseFirestore.instance.collection("Comment").where("PostId",isEqualTo: id).get().then((value) => value.docs.forEach((element) {
+        comments.add(CommentPost.fromJson(element.data()));
+      }));
+      for(var item in listLikes){
+        await FirebaseFirestore.instance.collection("LikePost").doc(item.id).delete();
+      }
+       for(var item in comments){
+        await FirebaseFirestore.instance.collection("Comment").doc(item.id).delete();
+      }
   }
   Future<String> updateImageByPost(String url,String path,File file)async{
       await FirebaseStorage.instance.refFromURL(url).delete();

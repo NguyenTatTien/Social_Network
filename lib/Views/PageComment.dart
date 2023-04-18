@@ -15,6 +15,7 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
+import '../Models/CommentShow.dart';
 import '../Models/Like.dart';
 import '../Models/ReactionElement.dart';
 
@@ -293,8 +294,8 @@ class _PageCommentState extends State<PageComment> {
   }
 Widget commentView(int i){
     return Container(
-            child: CommentTreeWidget<Comment, Comment>(
-              Comment(
+            child: CommentTreeWidget<CommentShow, CommentShow>(
+              CommentShow(
                   userId: '${(jsonListComment![i]["userComment"] as User).id}',
                   avatar: '${(jsonListComment![i]["userComment"] as User).image}',
                   userName: '${(jsonListComment![i]["userComment"] as User).firstName} ${(jsonListComment![i]["userComment"] as User).lastName}',
@@ -303,7 +304,7 @@ Widget commentView(int i){
               // ignore: prefer_const_literals_to_create_immutables
               [
                 for(var item in (jsonListComment![i]["jsonSubComment"] as List<Map<String,Object>>))
-                  Comment(
+                  CommentShow(
                       userId: '${(item["userSubComment"] as User).id}',
                       avatar: '${(item["userSubComment"] as User).image}',
                       userName: '${(item["userSubComment"] as User).firstName} ${(item["userSubComment"] as User).lastName}',
