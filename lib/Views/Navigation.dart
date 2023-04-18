@@ -113,7 +113,9 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    return PickupLayout(scaffold: Scaffold(
+    return 
+    // PickupLayout(scaffold: 
+    Scaffold(
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
@@ -209,6 +211,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
         //         ),
                             
        ],))
-       ));
+       )
+       ;
   }
 }

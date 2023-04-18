@@ -306,7 +306,9 @@ class MyChatState extends State<MyChat> with WidgetsBindingObserver{
       appBar: AppBar(
         actions: [Padding(
             padding: EdgeInsets.only(right: 20),
-            child: InkWell(onTap: () async => await Permissions.cameraAndMicrophonePermissionsGranted()? CallUtils.dial(from:myUser, to: userMap,context: context):{},child:Icon(Icons.videocam_rounded)),
+            child: InkWell(onTap: () async => 
+            // await Permissions.cameraAndMicrophonePermissionsGranted()? CallUtils.dial(from:myUser, to: userMap,context: context):
+            {},child:Icon(Icons.videocam_rounded)),
           ),],
         backgroundColor: mainColor,
         title: StreamBuilder<DocumentSnapshot>(
