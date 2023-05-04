@@ -355,8 +355,6 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
           errorText: 'Bình luận không được để trống',
           withBorder: false,
           sendButtonMethod: () {
-           
-
             commentPost(parentId,userReceiver,listShortVideo[index]);
             setState(() {
               commentController.text = "";
@@ -472,7 +470,6 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
           ));
     }
   }
-
   videoSlider(int index) {
     return AnimatedBuilder(
       animation: pageController,
@@ -598,13 +595,13 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
             child: CommentTreeWidget<CommentShow, CommentShow>(
               CommentShow(
                   userId: '',
-                  avatar: '${(jsonListComment![i]["userComment"] as User).image}',
-                  userName: '${(jsonListComment![i]["userComment"] as User).firstName} ${(jsonListComment![i]["userComment"] as User).lastName}',
-                  content: '${(jsonListComment![i]["parentComment"] as CommentObject).content}'),
+                  avatar: '${(jsonListComment[i]["userComment"] as User).image}',
+                  userName: '${(jsonListComment[i]["userComment"] as User).firstName} ${(jsonListComment[i]["userComment"] as User).lastName}',
+                  content: '${(jsonListComment[i]["parentComment"] as CommentObject).content}'),
                   
               // ignore: prefer_const_literals_to_create_immutables
               [
-                for(var item in (jsonListComment![i]["jsonSubComment"] as List<Map<String,Object>>))
+                for(var item in (jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>))
                   CommentShow(
                       userId: '${(item["userSubComment"] as User).id}',
                       avatar: '${(item["userSubComment"] as User).image}',
@@ -627,7 +624,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
               ],
               
               treeThemeData:
-                    TreeThemeData(lineColor:(jsonListComment![i]["jsonSubComment"] as List<Map<String,Object>>).length>0?Color.fromARGB(255, 223, 223, 223):Color.fromARGB(255, 255, 255, 255), lineWidth:2),
+                    TreeThemeData(lineColor:(jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>).length>0?Color.fromARGB(255, 223, 223, 223):Color.fromARGB(255, 255, 255, 255), lineWidth:2),
               avatarRoot: (context, data) => PreferredSize(
                 child: CircleAvatar(
                   radius: 18,
@@ -692,7 +689,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                               commentController.text = data.userName!;
                               userReceiver = await getUserById(data.userId!);
                               setState(() {
-                                parentId = (jsonListComment![i]["parentComment"] as CommentObject).id!;
+                                parentId = (jsonListComment[i]["parentComment"] as CommentObject).id!;
                                 userReceiver;
                                 commentController;
                               });
@@ -749,7 +746,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                               width: 24,
                             ),
                             InkWell(onTap: (){
-                              commentController.text = (jsonListComment![i]["userComment"] as User).firstName! + " "+ (jsonListComment![i]["userComment"] as User).lastName!;
+                              commentController.text = (jsonListComment[i]["userComment"] as User).firstName! + " "+ (jsonListComment[i]["userComment"] as User).lastName!;
                               
                               setState(() {
                                 parentId = (jsonListComment[i]["parentComment"] as CommentObject).id!;
