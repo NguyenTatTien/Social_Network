@@ -1,23 +1,26 @@
 // ignore: file_names
 class Like{
   String? id;
-  String? postId;
+  String? objectId;
   String? userId;
   int? type;
+  String?objectType;
   DateTime? createDate;
-  Like({this.id,this.postId,this.userId,this.type,this.createDate});
+  Like({this.id,this.objectId,this.userId,this.type,this.objectType,this.createDate});
   Like.fromJson(Map<String, dynamic> json)
       : id = json['Id'],
-        postId = json['PostId'],
+        objectId = json['ObjectId'],
         userId = json['UserId'],
         type = json['Type'],
+        objectType = json["ObjectType"],
         createDate = json['CreateDate'].toDate();
       
   Map<String, dynamic> toJson() => {
         'Id': id,
-        'PostId': postId,
+        'ObjectId': objectId,
         'UserId':userId,
         "Type":type,
+        "ObjectType":objectType,
         'CreateDate':createDate
       };
 }

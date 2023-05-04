@@ -1,5 +1,6 @@
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
+import 'package:do_an_tot_nghiep/Views/Navigation.dart';
 import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:do_an_tot_nghiep/Views/onboarding_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,19 +14,20 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'Views/login.dart';
 int? initScreen=0;
-
+bool?status;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   initScreen = await prefs.getInt("initScreen");
+  status = prefs.getBool('isLoggedIn');
   await prefs.setInt("initScreen", 1);
-  runApp(MyApp(initScreen!));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  int initScreen;
-  MyApp(this.initScreen);
+
+  const MyApp();
 
   // This widget is the root of your application.
   @override
@@ -183,7 +185,8 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return initScreen==0||initScreen==null? OnboardingScreen():LoginPage();
+
+    return initScreen==0||initScreen==null? OnboardingScreen(): status==false?LoginPage():NavigatorView();
      
   }
 }

@@ -2,6 +2,7 @@ import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Services/AuthService.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
 import 'package:do_an_tot_nghiep/Views/Navigation.dart';
+import 'package:do_an_tot_nghiep/Views/ResetPassword.dart';
 import 'package:do_an_tot_nghiep/Views/bezierContainer.dart';
 import 'package:do_an_tot_nghiep/Views/mainapp.dart';
 import 'package:do_an_tot_nghiep/Views/mainpage.dart';
@@ -9,6 +10,7 @@ import 'package:do_an_tot_nghiep/Views/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sql_conn/sql_conn.dart';
 
 
@@ -66,17 +68,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _submitButton() {
+  Widget _submitButton(){
      return 
    
-   InkWell(onTap: (){
-  
+   InkWell(onTap: ()async{
+   SharedPreferences prefs;
     // ignore: avoid_print
     FirebaseAuth.instance.signInWithEmailAndPassword(email: controllerEmail.text, password: controllerPassword.text).then((value) => {
-         Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView()))
+         Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView())),
+           prefs =  SharedPreferences.getInstance() as SharedPreferences,
+              prefs.setBool("isLoggedIn", true)
          
     });
-    
+   
     },child: Container(
       width: MediaQuery.of(context).size.width,
       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -157,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
             flex: 1,
             child: Container(
               decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 239, 219, 40),
+                color: Color.fromARGB(255, 234, 33, 6),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     topLeft: Radius.circular(5)),
@@ -287,10 +291,10 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     alignment: Alignment.centerRight,
-                    child: const Text('Forgot Password ?',
+                    child: InkWell(onTap: (){  Navigator.push(context, MaterialPageRoute(builder: (context)=> const ResetPasswor()));},child:Text('Forgot Password ?',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w500)),
-                  ),
+                  )),
                   _divider(),
                   _facebookButton(),
                   

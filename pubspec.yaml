@@ -67,6 +67,7 @@ dependencies:
   # permission_handler: ^3.2.1
   shared_preferences: ^2.0.20
   email_validator: ^2.1.17
+  video_player: ^2.6.1
   flutter_staggered_animations: ^1.1.1
 dev_dependencies:
   flutter_test:

@@ -48,7 +48,7 @@ class _EditProfileState extends State<EditProfile> {
     controllerLastName.text = user!.lastName!;
     controllerEmail.text = user!.email!;
     controllerPhone.text = user!.phoneNumber!;
-    controllerPassword.text = user!.password!;
+    //controllerPassword.text = user!.password!;
     address = user!.address!;
     if(user!.birthDay.toString()!=""){
       birthDay = user!.birthDay!;
@@ -120,7 +120,7 @@ Widget _entryField(String title,var controller, {bool isPassword = false}) {
           user!.lastName = controllerLastName.text;
           user!.email = controllerEmail.text;
           user!.phoneNumber = controllerPhone.text;
-          user!.password = controllerPassword.text;
+          //user!.password = controllerPassword.text;
           user!.birthDay = birthDay;
           // ignore: prefer_interpolation_to_compose_strings
           if(stateValue!="State"){
@@ -236,13 +236,13 @@ Widget _entryField(String title,var controller, {bool isPassword = false}) {
       			
       		
       ],),
-      Row(crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Expanded (child:Text("Password:"),flex: 1,),
-        _entryField("Password",controllerPassword,isPassword: true)
+      // Row(crossAxisAlignment: CrossAxisAlignment.center,
+      //   mainAxisAlignment: MainAxisAlignment.center,
+      //   children: [
+      //     const Expanded (child:Text("Password:"),flex: 1,),
+      //   _entryField("Password",controllerPassword,isPassword: true)
       
-      ],),
+      // ],),
       Row(crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

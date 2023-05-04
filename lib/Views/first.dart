@@ -28,6 +28,7 @@ class FirstFeedIU extends StatefulWidget {
 class _FirstFeedIUState extends State<FirstFeedIU> {
   final controllerScroll = ScrollController();
   var posts = <Map<String,Object>>[];
+  List<bool> _reactionViews = [];
   var lastData = null;
   Reaction _reaction = Reaction.none;
   bool _reactionView = false;
@@ -44,6 +45,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
     posts = await listPost("Post",auth.FirebaseAuth.instance.currentUser!.uid,lastData);
     setState(() {
       posts;
+       _reactionViews = List<bool>.generate(posts.length, (index) => false,growable: true);
     });
   }
   @override
@@ -52,6 +54,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
    
     // TODO: implement initState
     super.initState();
+    
      MainPage.scrollController.addListener(scrollListener);
   }
    void scrollListener() async{
@@ -65,6 +68,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
       }
       setState(() {
         posts;
+        _reactionViews = List<bool>.generate(posts.length, (index) => false,growable: true);
       });
       
     
@@ -80,15 +84,15 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
       updateLikePost(getlike);
       setState(() {
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).firstWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid).type=index;
-        _reactionView = false;
+       
       });
     }
     else{
       
-      Like like = Like(id: "",postId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,createDate: DateTime.now());
+      Like like = Like(id: "",objectId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,objectType: "post",createDate: DateTime.now());
       post.likeCount=post.likeCount! + 1;
       updatePost(post);
-      CreateNewData("LikePost", like);
+      CreateNewData("Like", like);
       if(post.createBy!=auth.FirebaseAuth.instance.currentUser!.uid){
         User user= await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
         NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã thích một bài viết của bạn",receiver: post.createBy,createDate: DateTime.now(),idObject: post.id,sender: user.id);
@@ -99,7 +103,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
       }
       setState(() {
       ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["post"]) as Post).likeCount! + 1;
-      _reactionView = false;
+     
       // ((posts.firstWhere((element) => (element["post"] as Post).id==id)["listUserLikePost"]) as List<Like>).remove((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
       ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).add(like);
     });
@@ -113,7 +117,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
     var idLikePost = ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).firstWhere((element)=> element.userId == auth.FirebaseAuth.instance.currentUser!.uid).id;
     updatePost(post);
     if(idLikePost != null && idLikePost != ""){
-       removeData("LikePost",idLikePost);
+       removeData("Like",idLikePost);
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["post"]) as Post).likeCount! - 1;
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).removeWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
     }
@@ -123,7 +127,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
     });
     
   }
-  Widget loadPost(Map<String,Object> post){
+  Widget loadPost(Map<String,Object> post,int index){
 
      return Stack(
       children: [
@@ -225,7 +229,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
               children: [
               if((post["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isEmpty)
                     InkWell(onTap: (){likePost((post["post"] as Post),1);},onLongPress: (){setState(() {
-                        _reactionView = true;
+                        _reactionViews[index] = true;
                       });},child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
@@ -236,7 +240,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
               
               if((post["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isNotEmpty)
                       InkWell(onTap: (){notLikePost((post["post"] as Post));},onLongPress: (){setState(() {
-                        _reactionView = true;
+                       _reactionViews[index] = true;
                       });},child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
@@ -260,7 +264,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
               // )
             ],), const Divider(color: Color.fromARGB(95, 46, 46, 46),thickness: 5,),
           ],),
-           if(_reactionView)
+           if(_reactionViews[index])
               Positioned(bottom: 50,left: 70,child:Opacity(opacity: 1,
       child: Container(
         padding: EdgeInsets.fromLTRB(2, 2, 2, 2),
@@ -295,7 +299,9 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
                   
                   child:FadeInAnimation(
                   
-                    child: InkWell(child:reactions[index].icon,onTap: (){likePost((post["post"] as Post),index+1);})
+                    child: InkWell(child:reactions[index].icon,onTap: (){likePost((post["post"] as Post),index+1);setState(() {
+                      _reactionViews[index] = false;
+                    });})
                   ),
                 ),
               ));})))),
@@ -313,7 +319,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           itemBuilder: (context, index) {
-            return loadPost(posts[index]);
+            return loadPost(posts[index],index);
           },
           itemCount: posts.length,);
     } 

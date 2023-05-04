@@ -10,6 +10,7 @@ import 'package:do_an_tot_nghiep/Views/Chat.dart';
 import 'package:do_an_tot_nghiep/Views/EditProfile.dart';
 import 'package:do_an_tot_nghiep/Views/PageComment.dart';
 import 'package:do_an_tot_nghiep/Views/editorText.dart';
+import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,6 +21,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 // ignore: import_of_legacy_library_into_null_safe, unused_import
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Models/ReactionElement.dart';
 import 'Design.dart';
  const kLargeTextStyle = TextStyle(
@@ -131,10 +133,10 @@ class _ProfileState extends State<Profile> {
     }
     else{
       
-      Like like = Like(id: "",postId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,createDate: DateTime.now());
+      Like like = Like(id: "",objectId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,objectType: "post",createDate: DateTime.now());
       post.likeCount=post.likeCount! + 1;
       updatePost(post);
-      CreateNewData("LikePost", like);
+      CreateNewData("Like", like);
       if(post.createBy!=auth.FirebaseAuth.instance.currentUser!.uid){
         User user= await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
         NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã thích một bài viết của bạn",receiver: post.createBy,createDate: DateTime.now(),idObject: post.id,sender: user.id);
@@ -151,15 +153,19 @@ class _ProfileState extends State<Profile> {
     });
   
     }
-   
-    
+  }
+  logout() async{
+      user.token = "";
+      await updateData("User", user);
+       SharedPreferences prefs = await SharedPreferences.getInstance();
+      await auth.FirebaseAuth.instance.signOut().then((value) => {Navigator.of(context).pop(),  Navigator.push(context,MaterialPageRoute(builder: (context)=> const LoginPage())),prefs.setBool('isLoggedIn',false)});
   }
   notLikePost(Post post){
     post.likeCount = post.likeCount! - 1;
     var idLikePost = ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).firstWhere((element)=> element.userId == auth.FirebaseAuth.instance.currentUser!.uid).id;
     updatePost(post);
     if(idLikePost != null && idLikePost != ""){
-       removeData("LikePost",idLikePost);
+       removeData("Like",idLikePost);
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["post"]) as Post).likeCount! - 1;
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).removeWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
     }
@@ -468,9 +474,16 @@ const SizedBox(height: 10.0,),
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> const EditProfile())); },
-                                    child: const Text('Edit Information'),
+                                    child: const Text('Chỉnh sửa thông tin'),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () { logout(); },
+                                    child: const Text('Đăng xuất'),
                                   ),
                                 )
+
                                 ],),])),
                                 Divider(color: Color.fromARGB(95, 46, 46, 46),thickness: 5,),
                              

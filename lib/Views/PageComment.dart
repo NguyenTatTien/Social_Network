@@ -3,7 +3,7 @@ import 'package:comment_tree/data/comment.dart';
 import 'package:comment_tree/widgets/comment_tree_widget.dart';
 import 'package:comment_tree/widgets/tree_theme_data.dart';
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
-import 'package:do_an_tot_nghiep/Models/CommentPost.dart';
+import 'package:do_an_tot_nghiep/Models/CommentObject.dart';
 import 'package:do_an_tot_nghiep/Models/Notification.dart';
 import 'package:do_an_tot_nghiep/Models/Post.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
@@ -60,10 +60,10 @@ class _PageCommentState extends State<PageComment> {
     }
     else{
       
-        Like like = Like(id: "",postId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,createDate: DateTime.now());
+        Like like = Like(id: "",objectId: post.id,userId: auth.FirebaseAuth.instance.currentUser!.uid,type: index,objectType: "post",createDate: DateTime.now());
         post.likeCount=post.likeCount! + 1;
         updatePost(post);
-        CreateNewData("LikePost", like);
+        CreateNewData("Like", like);
         if(post.createBy!=auth.FirebaseAuth.instance.currentUser!.uid){
           User user= await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
           NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã thích một bài viết của bạn",receiver: post.createBy,createDate: DateTime.now(),idObject: post.id,sender: user.id);
@@ -85,7 +85,7 @@ class _PageCommentState extends State<PageComment> {
     var idLikePost = (jsonPost!["listUserLikePost"] as List<Like>).firstWhere((element)=> element.userId == auth.FirebaseAuth.instance.currentUser!.uid).id;
     updatePost(post);
     if(idLikePost != null && idLikePost != ""){
-       removeData("LikePost",idLikePost);
+       removeData("Like",idLikePost);
         (jsonPost!["post"] as Post).likeCount! - 1;
         (jsonPost!["listUserLikePost"] as List<Like>).removeWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
     }
@@ -97,7 +97,7 @@ class _PageCommentState extends State<PageComment> {
   }
   void loadComment() async{
    
-    jsonListComment = await loadCommentPost((jsonPost!["post"] as Post).id!);
+    jsonListComment = await loadCommentPost((jsonPost!["post"] as Post).id!,"post");
     user = await getUserById(auth.FirebaseAuth.instance.currentUser!.uid);
     
     setState(() {
@@ -299,7 +299,7 @@ Widget commentView(int i){
                   userId: '${(jsonListComment![i]["userComment"] as User).id}',
                   avatar: '${(jsonListComment![i]["userComment"] as User).image}',
                   userName: '${(jsonListComment![i]["userComment"] as User).firstName} ${(jsonListComment![i]["userComment"] as User).lastName}',
-                  content: '${(jsonListComment![i]["parentComment"] as CommentPost).content}'),
+                  content: '${(jsonListComment![i]["parentComment"] as CommentObject).content}'),
                   
               // ignore: prefer_const_literals_to_create_immutables
               [
@@ -308,7 +308,7 @@ Widget commentView(int i){
                       userId: '${(item["userSubComment"] as User).id}',
                       avatar: '${(item["userSubComment"] as User).image}',
                       userName: '${(item["userSubComment"] as User).firstName} ${(item["userSubComment"] as User).lastName}',
-                      content: '${(item["subComment"] as CommentPost).content}'),
+                      content: '${(item["subComment"] as CommentObject).content}'),
                 // Comment(
                 //     avatar: 'assets/images/person5.jpg',
                 //     userName: 'anh tien',
@@ -391,7 +391,7 @@ Widget commentView(int i){
                               commentController.text = data.userName!;
                               userReceiver = await getUserById(data.userId!);
                               setState(() {
-                                parentId = (jsonListComment![i]["parentComment"] as CommentPost).id!;
+                                parentId = (jsonListComment![i]["parentComment"] as CommentObject).id!;
                                 userReceiver;
                                 commentController;
                               });
@@ -451,7 +451,7 @@ Widget commentView(int i){
                               commentController.text = (jsonListComment![i]["userComment"] as User).firstName! + " "+ (jsonListComment![i]["userComment"] as User).lastName!;
                               
                               setState(() {
-                                parentId = (jsonListComment![i]["parentComment"] as CommentPost).id!;
+                                parentId = (jsonListComment![i]["parentComment"] as CommentObject).id!;
                                 userReceiver = (jsonListComment![i]["userComment"] as User);
                                 commentController;
                               });
@@ -495,10 +495,10 @@ Widget commentView(int i){
     if(commentController.text!=""){
         // ignore: unnecessary_null_comparison
         String userid = userReceiver != null ? userReceiver.id! :  "";
-        CommentPost comment = CommentPost(id: "",userId: auth.FirebaseAuth.instance.currentUser!.uid,postId:(jsonPost!["post"] as Post).id,parentId: parentId,receiver: userid,content: commentController.text,createDate: DateTime.now());
+        CommentObject comment = CommentObject(id: "",userId: auth.FirebaseAuth.instance.currentUser!.uid,postId:(jsonPost!["post"] as Post).id,parentId: parentId,receiver: userid,content: commentController.text,type: "post", createDate: DateTime.now());
     CreateNewData("Comment", comment);
     if(parentId!=""){
-        ((jsonListComment!.firstWhere((element) => (element["parentComment"] as CommentPost).id==parentId))["jsonSubComment"] as List<Map<String,Object>>).add({"subComment":comment,"userSubComment":user});
+        ((jsonListComment!.firstWhere((element) => (element["parentComment"] as CommentObject).id==parentId))["jsonSubComment"] as List<Map<String,Object>>).add({"subComment":comment,"userSubComment":user});
         NotificationObject notification = NotificationObject(id: "",content: "${user.firstName} ${user.lastName} đã nhắc bạn trong bài viết bạn quan tâm.",receiver: (jsonPost!["post"] as Post).createBy,createDate: DateTime.now(),idObject: (jsonPost!["post"] as Post).id,sender: user.id);
        CreateNewData("Notification", notification);
        PushNotification.sendPushNotification(User(),"${user.firstName} ${user.lastName} đã bình luận một bài viết của bạn.",userReceiver.token!);

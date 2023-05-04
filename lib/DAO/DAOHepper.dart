@@ -8,7 +8,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_tot_nghiep/Models/Call.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
-import 'package:do_an_tot_nghiep/Models/CommentPost.dart';
+import 'package:do_an_tot_nghiep/Models/CommentObject.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
 import 'package:do_an_tot_nghiep/Models/Like.dart';
 import 'package:do_an_tot_nghiep/Models/Notification.dart';
@@ -18,6 +18,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
+
+import '../Models/ShortVideo.dart';
 
   // ignore: non_constant_identifier_names
    CreateData(String collection,var object) async{
@@ -88,7 +90,7 @@ import 'package:intl/intl.dart';
           var durationDate = DateTime.now().difference(post.createDate!);
         // ignore: prefer_interpolation_to_compose_strings
            var time = durationDate.inSeconds<60?durationDate.inSeconds.toString()+" giây":durationDate.inMinutes<60?durationDate.inMinutes.toString()+" phút":durationDate.inHours<24?durationDate.inHours.toString()+" giờ":durationDate.inDays<10?durationDate.inDays.toString()+" ngày":DateFormat("dd/MM/yyyy").format(post.createDate!).toString();
-          await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: post.id).get().then((value) => {
+          await FirebaseFirestore.instance.collection("Like").where("PostId",isEqualTo: post.id).get().then((value) => {
               value.docs.forEach((element) {
                 likePosts.add(Like.fromJson(element.data()));
               })
@@ -218,28 +220,29 @@ import 'package:intl/intl.dart';
   removeData(String collection,String id) async{
     await FirebaseFirestore.instance.collection(collection).doc(id).delete();
   }
-  Future<List<Map<String,Object>>> loadCommentPost(String postId) async{
+  Future<List<Map<String,Object>>> loadCommentPost(String objectId,String type) async{
     var jsonListComment = <Map<String,Object>>[];
     
     await FirebaseFirestore.instance.collection("Comment").orderBy("CreateDate",descending: true).get().then((value) => 
-    value.docs.where((element) => CommentPost.fromJson(element.data()).postId==postId && CommentPost.fromJson(element.data()).parentId=="").forEach((element) {
-      jsonListComment.add({"parentComment":CommentPost.fromJson(element.data()),"userComment":User(),"jsonSubComment":<Map<String,Object>>[]});
+    value.docs.where((element) => CommentObject.fromJson(element.data()).postId==objectId && CommentObject.fromJson(element.data()).parentId==""&&CommentObject.fromJson(element.data()).type==type).forEach((element) {
+      jsonListComment.add({"parentComment":CommentObject.fromJson(element.data()),"userComment":User(),"jsonSubComment":<Map<String,Object>>[]});
      
     }));
     for(int i = 0;i<jsonListComment.length;i++){
-      User user = await getUserById((jsonListComment[i]["parentComment"] as CommentPost).userId!);
+      User user = await getUserById((jsonListComment[i]["parentComment"] as CommentObject).userId!);
       jsonListComment[i]["userComment"] = user;
       
       await FirebaseFirestore.instance.collection("Comment").orderBy("CreateDate",descending: false).get().then((value) => 
-       value.docs.where((element) => CommentPost.fromJson(element.data()).postId==postId && CommentPost.fromJson(element.data()).parentId==(jsonListComment[i]["parentComment"] as CommentPost).id).forEach((element) async{
-        User user = await getUserById(CommentPost.fromJson(element.data()).userId!);
-        (jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>).add({"subComment":CommentPost.fromJson(element.data()),"userSubComment":user});
+       value.docs.where((element) => CommentObject.fromJson(element.data()).postId==objectId && CommentObject.fromJson(element.data()).parentId==(jsonListComment[i]["parentComment"] as CommentObject).id && CommentObject.fromJson(element.data()).type == type).forEach((element) async{
+        User user = await getUserById(CommentObject.fromJson(element.data()).userId!);
+        (jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>).add({"subComment":CommentObject.fromJson(element.data()),"userSubComment":user});
      
     }));
      
     } 
     return jsonListComment;
   }
+ 
   Future<String> getRoomChatByUser(String user1, String user2) async{
     String id  =  ChatRoom.fromJson(await FirebaseFirestore.instance.collection("ChatRoom").get().then((value) => value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirst==user1 && ChatRoom.fromJson(element.data()).userSecond==user2) || (ChatRoom.fromJson(element.data()).userFirst==user2 && ChatRoom.fromJson(element.data()).userSecond==user1)).data())).id!;
     return id;
@@ -295,7 +298,7 @@ import 'package:intl/intl.dart';
           var durationDate = DateTime.now().difference(post.createDate!);
         // ignore: prefer_interpolation_to_compose_strings
            var time = durationDate.inSeconds<60?durationDate.inSeconds.toString()+" giây":durationDate.inMinutes<60?durationDate.inMinutes.toString()+" phút":durationDate.inHours<24?durationDate.inHours.toString()+" giờ":durationDate.inDays<10?durationDate.inDays.toString()+" ngày":DateFormat("dd/MM/yyyy").format(post.createDate!).toString();
-          await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: post.id).get().then((value) => {
+          await FirebaseFirestore.instance.collection("Like").where("PostId",isEqualTo: post.id).get().then((value) => {
               value.docs.forEach((element) {
                 likePosts.add(Like.fromJson(element.data()));
               })
@@ -346,26 +349,26 @@ import 'package:intl/intl.dart';
   Stream<DocumentSnapshot> callStream(String id)=> FirebaseFirestore.instance.collection("Call").doc(id).snapshots();
   Future<Like> checkLike(String userId, String postId) async{
   var like = Like();
-   await FirebaseFirestore.instance.collection("LikePost").where("UserId",isEqualTo: userId).where("PostId",isEqualTo: postId).get().then((value) => value.docs.isNotEmpty?value.docs.forEach((element) {
+   await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("PostId",isEqualTo: postId).get().then((value) => value.docs.isNotEmpty?value.docs.forEach((element) {
       like = Like.fromJson(element.data());
     }):like=Like());
     return like;
   }
-  updateLikePost(Like likePost) async{
-      await FirebaseFirestore.instance.collection("LikePost").doc(likePost.id).update(likePost.toJson());
+  updateLikePost(Like like) async{
+      await FirebaseFirestore.instance.collection("Like").doc(like.id).update(like.toJson());
   }
   removePostById(String id) async{
       List<Like> listLikes = <Like>[];
-      List<CommentPost> comments = <CommentPost>[];
+      List<CommentObject> comments = <CommentObject>[];
       await FirebaseFirestore.instance.collection("Post").doc(id).delete();
-      await FirebaseFirestore.instance.collection("LikePost").where("PostId",isEqualTo: id).get().then((value) => value.docs.forEach((element) {
+      await FirebaseFirestore.instance.collection("Like").where("PostId",isEqualTo: id).get().then((value) => value.docs.forEach((element) {
         listLikes.add(Like.fromJson(element.data()));
       }));
       await FirebaseFirestore.instance.collection("Comment").where("PostId",isEqualTo: id).get().then((value) => value.docs.forEach((element) {
-        comments.add(CommentPost.fromJson(element.data()));
+        comments.add(CommentObject.fromJson(element.data()));
       }));
       for(var item in listLikes){
-        await FirebaseFirestore.instance.collection("LikePost").doc(item.id).delete();
+        await FirebaseFirestore.instance.collection("Like").doc(item.id).delete();
       }
        for(var item in comments){
         await FirebaseFirestore.instance.collection("Comment").doc(item.id).delete();
@@ -378,4 +381,21 @@ import 'package:intl/intl.dart';
        String urlImage = await chilPath.getDownloadURL();
       return urlImage;
   }
-   
+  Future<List<Map<String,Object>>> getListShortVideo(String userId)async{
+    List<Map<String,Object>> listShortVideo = [];
+     await FirebaseFirestore.instance.collection("ShortVideo").orderBy("CreateDate",descending: true).get().then((value) => value.docs.forEach((element) { 
+        listShortVideo.add({"shortvideo":ShortVideo.fromJson(element.data()),"isLike":false,});
+     }));
+     for(var item in listShortVideo){
+      var shortvideo = (item["shortvideo"] as ShortVideo);
+        await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("ObjectId",isEqualTo: shortvideo.id).where("ObjectType",isEqualTo: "video").get().then((value) => item["isLike"]=value.docs.isNotEmpty?true:false);
+     }
+     return listShortVideo;
+  }
+
+ Future<Like> getLike(String userId,String objectId)async{
+     Like like = Like();
+     await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("ObjectId",isEqualTo: objectId).where("ObjectType",isEqualTo: "video").snapshots().first.then((value) => like = Like.fromJson(value.docs.first.data()));
+     return like;
+  }
+ 
