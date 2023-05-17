@@ -7,13 +7,17 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_tot_nghiep/Models/Call.dart';
+import 'package:do_an_tot_nghiep/Models/ChatFinal.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/CommentObject.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
+import 'package:do_an_tot_nghiep/Models/GroupChat.dart';
 import 'package:do_an_tot_nghiep/Models/Like.dart';
+import 'package:do_an_tot_nghiep/Models/MemberGroupChat.dart';
 import 'package:do_an_tot_nghiep/Models/Notification.dart';
 import 'package:do_an_tot_nghiep/Models/Post.dart';
 import 'package:do_an_tot_nghiep/Models/User.dart';
+import 'package:do_an_tot_nghiep/Views/MemberGroup.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -40,47 +44,50 @@ import '../Models/ShortVideo.dart';
        var lsPost = <Post>[];
        var lsUserByPost = <User>[]; 
        var listObject = <Map<String,Object>>[];
-       var lsFriendShipId = <String>[];
-       lsFriendShipId.add(id);
-     await FirebaseFirestore.instance.collection("FriendShip").where("Requester",isEqualTo: id).get().then((value){
-          value.docs.forEach((result){
-            if(FriendShip.fromJson(result.data()).status==true){
-                lsFriendShipId.add(FriendShip.fromJson(result.data()).addressee!);
-            }
+    //    var lsFriendShipId = <String>[];
+    //    lsFriendShipId.add(id);
+    //  await FirebaseFirestore.instance.collection("FriendShip").where("Requester",isEqualTo: id).get().then((value){
+    //       value.docs.forEach((result){
+    //         if(FriendShip.fromJson(result.data()).status==true){
+    //             lsFriendShipId.add(FriendShip.fromJson(result.data()).addressee!);
+    //         }
            
-          });
-      });
-       await FirebaseFirestore.instance.collection("FriendShip").where("Addressee",isEqualTo: id).get().then((value){
-          value.docs.forEach((result){
-              if(FriendShip.fromJson(result.data()).status==true){
-              lsFriendShipId.add(FriendShip.fromJson(result.data()).requester!);
-            }
+    //       });
+    //   });
+    //    await FirebaseFirestore.instance.collection("FriendShip").where("Addressee",isEqualTo: id).get().then((value){
+    //       value.docs.forEach((result){
+    //           if(FriendShip.fromJson(result.data()).status==true){
+    //           lsFriendShipId.add(FriendShip.fromJson(result.data()).requester!);
+    //         }
             
-          });
-      });   
-     
+    //       });
+    //   });   
+  
+    // print(lsFriendShipId.length);
       // igno
       //varre: unnecessary_null_comparison
       if(data==null){
+       
+
           await FirebaseFirestore.instance.collection(collection).orderBy("CreateDate",descending: true).limit(3).get().then((value){value.docs.forEach((result){
-          print(result.data());
-        if(lsFriendShipId.contains(Post.fromJson(result.data()).createBy)){
+            
+              lsPost.add(Post.fromJson(result.data()));
+          
         
-            lsPost.add(Post.fromJson(result.data()));
-        }
         
     });}); 
       }
       else{
          await FirebaseFirestore.instance.collection(collection).orderBy("CreateDate",descending: true).startAfter([data]).limit(3).get().then((value){value.docs.forEach((result){
-          print(result.data());
-        if(lsFriendShipId.contains(Post.fromJson(result.data()).createBy)){
+       
+              lsPost.add(Post.fromJson(result.data()));
+          
+            
         
-            lsPost.add(Post.fromJson(result.data()));
-        }
         
     });}); 
       }
+     
       //Stopwatch stopwatch = new Stopwatch()..start();
   
     //print('doSomething() executed in ${stopwatch.elapsed}'); 
@@ -90,7 +97,7 @@ import '../Models/ShortVideo.dart';
           var durationDate = DateTime.now().difference(post.createDate!);
         // ignore: prefer_interpolation_to_compose_strings
            var time = durationDate.inSeconds<60?durationDate.inSeconds.toString()+" giây":durationDate.inMinutes<60?durationDate.inMinutes.toString()+" phút":durationDate.inHours<24?durationDate.inHours.toString()+" giờ":durationDate.inDays<10?durationDate.inDays.toString()+" ngày":DateFormat("dd/MM/yyyy").format(post.createDate!).toString();
-          await FirebaseFirestore.instance.collection("Like").where("PostId",isEqualTo: post.id).get().then((value) => {
+          await FirebaseFirestore.instance.collection("Like").where("ObjectId",isEqualTo: post.id).get().then((value) => {
               value.docs.forEach((element) {
                 likePosts.add(Like.fromJson(element.data()));
               })
@@ -112,6 +119,16 @@ import '../Models/ShortVideo.dart';
         return User();
      }
      
+  }
+   Future<GroupChat> getGroupChatById(String id) async{
+     var collection = FirebaseFirestore.instance.collection("GroupChat");
+     var docSnapshot =  await collection.doc(id).get();
+     if(docSnapshot.data()!=null){
+        return GroupChat.fromJson(docSnapshot.data()!);
+     }
+     else{
+        return GroupChat();
+     }
   }
   Future<List<Map<String,Object>>> getlistOthers(String id,var lastData) async{
     var lsFriendShip = <FriendShip>[];
@@ -244,12 +261,12 @@ import '../Models/ShortVideo.dart';
   }
  
   Future<String> getRoomChatByUser(String user1, String user2) async{
-    String id  =  ChatRoom.fromJson(await FirebaseFirestore.instance.collection("ChatRoom").get().then((value) => value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirst==user1 && ChatRoom.fromJson(element.data()).userSecond==user2) || (ChatRoom.fromJson(element.data()).userFirst==user2 && ChatRoom.fromJson(element.data()).userSecond==user1)).data())).id!;
+    String id  =  ChatRoom.fromJson(await FirebaseFirestore.instance.collection("UserChat").get().then((value) => value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirstById==user1 && ChatRoom.fromJson(element.data()).userSecondById==user2) || (ChatRoom.fromJson(element.data()).userFirstById==user2 && ChatRoom.fromJson(element.data()).userSecondById==user1)).data())).id!;
     return id;
 
   }
   Future<ChatRoom> getObjectRoomChatByUser(String user1, String user2) async{
-    var chatRoom  =  ChatRoom.fromJson(await FirebaseFirestore.instance.collection("ChatRoom").get().then((value) => value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirst==user1 && ChatRoom.fromJson(element.data()).userSecond==user2) || (ChatRoom.fromJson(element.data()).userFirst==user2 && ChatRoom.fromJson(element.data()).userSecond==user1)).data()));
+    var chatRoom  =  ChatRoom.fromJson(await FirebaseFirestore.instance.collection("UserChat").get().then((value) => value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirstById==user1 && ChatRoom.fromJson(element.data()).userSecondById==user2) || (ChatRoom.fromJson(element.data()).userFirstById==user2 && ChatRoom.fromJson(element.data()).userSecondById==user1)).data()));
     return chatRoom;
 
   }
@@ -270,8 +287,6 @@ import '../Models/ShortVideo.dart';
       for(var item in listNotification){
                   item['sender'] = await getUserById((item['notification'] as NotificationObject).sender!);
               }
-      
-      
        return listNotification;
   }
   Future<bool> checkUserByEmail(String email)async {
@@ -349,7 +364,7 @@ import '../Models/ShortVideo.dart';
   Stream<DocumentSnapshot> callStream(String id)=> FirebaseFirestore.instance.collection("Call").doc(id).snapshots();
   Future<Like> checkLike(String userId, String postId) async{
   var like = Like();
-   await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("PostId",isEqualTo: postId).get().then((value) => value.docs.isNotEmpty?value.docs.forEach((element) {
+   await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("ObjectId",isEqualTo: postId).get().then((value) => value.docs.isNotEmpty?value.docs.forEach((element) {
       like = Like.fromJson(element.data());
     }):like=Like());
     return like;
@@ -398,4 +413,107 @@ import '../Models/ShortVideo.dart';
      await FirebaseFirestore.instance.collection("Like").where("UserId",isEqualTo: userId).where("ObjectId",isEqualTo: objectId).where("ObjectType",isEqualTo: "video").snapshots().first.then((value) => like = Like.fromJson(value.docs.first.data()));
      return like;
   }
+  Future<int> countListFriend(String userId)async{
+    int count = 0;
+     await FirebaseFirestore.instance.collection("FriendShip").get().then((value) => count = value.docs.where((element) => (FriendShip.fromJson(element.data()).addressee==userId ||FriendShip.fromJson(element.data()).requester==userId)&&FriendShip.fromJson(element.data()).status==true).length);
+     return count;
+  }
+  Future<List<Map<String,Object>>> listRoomChat(String userId)async{
+    var roomChats = <Map<String,Object>>[];
+    
+    return roomChats;
+  }
+  Future<ChatRoom> getChatRoom(String userFirst,String userSecond) async{
+    ChatRoom chatRoom = ChatRoom();
+     await FirebaseFirestore.instance.collection("UserChat").get().then((value) => chatRoom = ChatRoom.fromJson(value.docs.firstWhere((element) => (ChatRoom.fromJson(element.data()).userFirstById==userFirst && ChatRoom.fromJson(element.data()).userFirstById==userSecond)|| (ChatRoom.fromJson(element.data()).userFirstById==userSecond && ChatRoom.fromJson(element.data()).userSecondById==userFirst)).data()));
+     return chatRoom;
+  }
+   
+  Future<ChatFinal> getChatFinal(String objectId) async{
+    ChatFinal chatFinal = ChatFinal();
+   var doc = await FirebaseFirestore.instance.collection("Chat").doc(objectId).get();
+    chatFinal = ChatFinal.fromJson(doc.data()!);
+     return chatFinal;
+  }
  
+  deleteChatRoom(String id)async{
+    await FirebaseFirestore.instance.collection("UserChat").doc(id).delete();
+  }
+  deleteChatFinal(String id)async{
+    await FirebaseFirestore.instance.collection("Chat").doc(id).delete();
+  }
+ uploadChatFinal(ChatFinal chatFinal)async{
+    await FirebaseFirestore.instance.collection("Chat").doc(chatFinal.id).update(chatFinal.toJson());
+ }
+ Future<List<String>> getListMemberInGroup(String groupId) async{
+  List<String> listMember = [];
+  await FirebaseFirestore.instance.collection("GroupChat").doc(groupId).collection("Member").get().then((value) => value.docs.forEach((element) { 
+    listMember.add(MemberGroupChat.fromJson(element.data()).userId!);
+  }));
+  return listMember;
+ }
+ Future<List<User>> lsFiendNotJoinGroupChat(String groupId,String id,List<User> members) async{
+
+   var lsFriendShip = <FriendShip>[];
+    var listObject = <User>[];
+     await FirebaseFirestore.instance.collection("FriendShip").where("Requester",isEqualTo: id).where("").get().then((value){
+          value.docs.forEach((result){
+            // ignore: iterable_contains_unrelated_type
+            if(!members.where((e)=>e.id == FriendShip.fromJson(result.data()).addressee).isNotEmpty){
+
+                lsFriendShip.add(FriendShip.fromJson(result.data()));
+            }
+          
+          });
+      });
+       await FirebaseFirestore.instance.collection("FriendShip").where("Addressee",isEqualTo: id).get().then((value){
+          value.docs.forEach((result){
+             // ignore: iterable_contains_unrelated_type
+             if(!members.where((e)=>e.id == FriendShip.fromJson(result.data()).requester).isNotEmpty){
+          
+                lsFriendShip.add(FriendShip.fromJson(result.data()));
+            }
+          });
+      });
+      await FirebaseFirestore.instance.collection("User").where("Id",isNotEqualTo: id).orderBy("Id",descending: true).get().then((value){
+                value.docs.forEach((result){
+                  var user = User.fromJson(result.data());
+                  if(lsFriendShip.where((element) => element.addressee==user.id||element.requester==user.id).toList().isNotEmpty){
+                      if(lsFriendShip.firstWhere((element) => element.addressee==user.id||element.requester==user.id).status==true){
+                         listObject.add(user);
+                      }
+                  }
+                 
+                });
+      });
+      return listObject;
+ }
+ insertMemberGroup(MemberGroupChat memberGroupChat)async{
+    await FirebaseFirestore.instance.collection("GroupChat").doc(memberGroupChat.groupId).collection("Member").add(memberGroupChat.toJson());
+ }
+ Future<MemberGroupChat> getMemberGroup(String groupId,String userId)async{
+    MemberGroupChat memberGroupChat = MemberGroupChat();
+    await FirebaseFirestore.instance.collection("GroupChat").doc(groupId).collection("Member").where("UserId").get().then((value) => memberGroupChat = MemberGroupChat.fromJson(value.docs.first.data()));
+    return memberGroupChat;
+ }
+ removeMemberGroup(String memberId,String groupId)async{
+    await FirebaseFirestore.instance.collection("GroupChat").doc(groupId).collection("Member").doc(memberId).delete();
+ }
+Future<bool> checkMemberGroup(GroupChat groupChat,String userId)async{
+  bool check = false;
+   await FirebaseFirestore.instance.collection("GroupChat").doc(groupChat.id).collection("Member").get().then((value) => check = value.docs.where((element) => MemberGroupChat.fromJson(element.data()).userId==userId).isNotEmpty?true:false);
+  return check;
+}
+Future<int> countMemberGroup(String groupId)async{
+  int count = 0;
+   await FirebaseFirestore.instance.collection("GroupChat").doc(groupId).collection("Member").get().then((value) => count = value.docs.length);
+   return count;
+}
+Future<String> getChatFinalId(String objectId,String type)async{
+   String id = "";
+   if(type=="user"){
+      await FirebaseFirestore.instance.collection("Chat").get().then((value) =>id = ChatFinal.fromJson(value.docs.firstWhere((element) => ChatFinal.fromJson(element.data()).typeChat==type && element.data()["Object"]["Id"]==objectId).data()).id!);
+   }
+  
+   return id;
+}

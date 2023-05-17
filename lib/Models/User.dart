@@ -46,4 +46,17 @@ class User {
         'Status':status,
         'Token':token
       };
+       User.fromJson2(Map<String, dynamic> json)
+      : id = json['Id'],
+        email = json['Email'],
+        firstName = json['FirstName'],
+        lastName = json['LastName'],
+        image = json['Image'],
+        password = json['Password'],
+        phoneNumber = json['PhoneNumber'],
+        address = json['Address'],
+        birthDay = json['BirthDay'],
+        status = json['Status'],
+        token = json['Token'],
+        createDate = json['CreateDate'];
 }

@@ -22,11 +22,12 @@ class MainPage extends StatelessWidget {
           child:Column(
          
           children: [
-            SizedBox(height: 220,child:Column(
+            SizedBox(height: 235,child:Column(
+              
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(
-                height: 35,
+                height: 55,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -35,17 +36,18 @@ class MainPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 25.0),
+
+                        padding: const EdgeInsets.only(left: 10.0,top: 5),
                         child: Image.asset(
                           'assets/images/logo.png',
                           height: 30,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 6, left: 15.0),
+                        padding: const EdgeInsets.only(top: 5, left: 15.0),
                         child: Text(
-                          'Socio Network',
-                          style: GoogleFonts.lato(
+                          'Mạng xã hội',
+                          style:TextStyle(
                               color: Colors.grey[700],
                               fontSize: 16,
                               letterSpacing: 1,
@@ -54,26 +56,24 @@ class MainPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  InkWell(
-                    onTap: () {
-                      // ignore: unnecessary_new
-                      var route = new MaterialPageRoute(
-                        // ignore: unnecessary_new
-                        builder: (BuildContext context) => const Message(),
-                      );
+                  // InkWell(
+                  //   onTap: () {
+                  //     // ignore: unnecessary_new
+                  //     var route = new MaterialPageRoute(
+                  //       // ignore: unnecessary_new
+                  //       builder: (BuildContext context) => const Message(),
+                  //     );
 
-                      Navigator.of(context).push(route);
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.only(right: 20.0, top: 4),
-                      child: Icon(Icons.link),
-                    ),
-                  )
+                  //     Navigator.of(context).push(route);
+                  //   },
+                  //   child: const Padding(
+                  //     padding: EdgeInsets.only(right: 20.0, top: 4),
+                  //     child: Icon(Icons.link),
+                  //   ),
+                  // )
                 ],
               ),
-              const SizedBox(
-                height: 10,
-              ),
+          
               // Image.asset(
               //   'images/first.png',
               //   height: 300,

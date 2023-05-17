@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/Services/AuthService.dart';
 import 'package:do_an_tot_nghiep/Views/Design.dart';
@@ -10,9 +12,10 @@ import 'package:do_an_tot_nghiep/Views/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sql_conn/sql_conn.dart';
-
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key, this.title}) : super(key: key);
@@ -30,27 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   var controllerPassword = TextEditingController();
   @override
 
-  Widget _backButton() {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.only(left: 0, top: 10, bottom: 10),
-              child: const Icon(Icons.keyboard_arrow_left, color: Colors.black),
-            ),
-            const Text('Back',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
-          ],
-        ),
-      ),
-    );
-  }
-
+ 
   Widget _entryField(String title, var controller,{bool isPassword = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -73,13 +56,49 @@ class _LoginPageState extends State<LoginPage> {
    
    InkWell(onTap: ()async{
    SharedPreferences prefs;
-    // ignore: avoid_print
-    FirebaseAuth.instance.signInWithEmailAndPassword(email: controllerEmail.text, password: controllerPassword.text).then((value) => {
-         Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView())),
-           prefs =  SharedPreferences.getInstance() as SharedPreferences,
-              prefs.setBool("isLoggedIn", true)
+   try{
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: controllerEmail.text, password: controllerPassword.text).then((value) => {
+            Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView())),
+           
          
     });
+   }on FirebaseAuthException catch (e) {
+
+      if (Platform.isAndroid) {
+        switch (e.message) {
+          case 'There is no user record corresponding to this identifier. The user may have been deleted.':
+            Fluttertoast.showToast(msg: "Tài khoản không tồn tài!");
+            break;
+          case 'The password is invalid or the user does not have a password.':
+            Fluttertoast.showToast(msg: "Mật khẩu không chính xác!");
+            break;
+          case 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.':
+             Fluttertoast.showToast(msg: "Mất kết nối, vui lòng kiểm tra mạng!");
+            break;
+          // ...
+          default:
+             Fluttertoast.showToast(msg: "Đăng nhập không thành công!");
+        }
+      } else if (Platform.isIOS) {
+        switch (e.code) {
+          case 'Error 17011':
+            Fluttertoast.showToast(msg: "Tài khoản không tồn tài!");
+            break;
+          case 'Error 17009':
+                Fluttertoast.showToast(msg: "Mật khẩu không chính xác!");
+            break;
+          case 'Error 17020':
+            Fluttertoast.showToast(msg: "Mất kết nối, vui lòng kiểm tra mạng!");
+            break;
+          // ...
+          default:
+             Fluttertoast.showToast(msg: "Đăng nhập không thành công!");
+        }
+  }
+
+   }
+    // ignore: avoid_print
+  
    
     },child: Container(
       width: MediaQuery.of(context).size.width,
@@ -99,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
               end: Alignment.centerRight,
               colors: [Color(0xffa26ce4), Color(0xff9900cc)])),
       child: const Text(
-        'Login',
+        'Đăng nhập',
         style: TextStyle(fontSize: 20, color: Colors.white),
       ),
     ),);
@@ -145,55 +164,91 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.push(context, MaterialPageRoute(builder: (context)=> const NavigatorView()));
       }
   }
-  Widget _facebookButton() {
-    return InkWell(onTap: (){
-        loginByGoogle();
+  Widget _googleButton() {
+    // return InkWell(onTap: (){
+    //     loginByGoogle();
       
-      },child:Container(
-      height: 50,
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 1,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 234, 33, 6),
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(5),
-                    topLeft: Radius.circular(5)),
-              ),
-              alignment: Alignment.center,
-              child: const Text('G',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
-                      fontWeight: FontWeight.w400)),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 224, 224, 223),
-                borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(5),
-                    topRight: Radius.circular(5)),
-              ),
-              alignment: Alignment.center,
-              child: const Text('Log in with Google',
-                  style: TextStyle(
-                      color: Color.fromARGB(255, 14, 0, 0),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400)),
-            ),
-          ),
-        ],
-      ),
-    ));
+    //   },child:Container(
+    //   height: 50,
+    //   margin: const EdgeInsets.symmetric(vertical: 20),
+    //   decoration: const BoxDecoration(
+    //     borderRadius: BorderRadius.all(Radius.circular(10)),
+    //   ),
+    //   child: Row(
+    //     children: <Widget>[
+    //       Expanded(
+    //         flex: 1,
+    //         child: Container(
+    //           decoration: const BoxDecoration(
+    //             color: Color.fromARGB(255, 234, 33, 6),
+    //             borderRadius: BorderRadius.only(
+    //                 bottomLeft: Radius.circular(5),
+    //                 topLeft: Radius.circular(5)),
+    //           ),
+    //           alignment: Alignment.center,
+    //           child: const Text('G',
+    //               style: TextStyle(
+    //                   color: Colors.white,
+    //                   fontSize: 25,
+    //                   fontWeight: FontWeight.w400)),
+    //         ),
+    //       ),
+    //       Expanded(
+    //         flex: 5,
+    //         child: Container(
+    //           decoration: const BoxDecoration(
+    //             color: Color.fromARGB(255, 224, 224, 223),
+    //             borderRadius: BorderRadius.only(
+    //                 bottomRight: Radius.circular(5),
+    //                 topRight: Radius.circular(5)),
+    //           ),
+    //           alignment: Alignment.center,
+    //           child: const Text('Đăng nhập tài khoản Google',
+    //               style: TextStyle(
+    //                   color: Color.fromARGB(255, 14, 0, 0),
+    //                   fontSize: 18,
+    //                   fontWeight: FontWeight.w400)),
+    //         ),
+    //       ),
+    //     ],
+    //   ),
+    // ));    
+    return Container(width: MediaQuery.of(context).size.width,child:ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.white,
+                  onPrimary: Colors.black,
+                  
+                ),
+                
+                onPressed: () {
+                   loginByGoogle();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Image(
+                        image: AssetImage("assets/images/g-logo.png"),
+                        height: 30.0,
+                        width: 40,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 24, right: 8),
+                        child: Text(
+                          'Đăng nhập tài khoản Google',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ));
   }
 
   Widget _createAccountLabel() {
@@ -210,14 +265,14 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: const <Widget>[
             Text(
-              'Don\'t have an account ?',
+              'Chưa có tài khoản?',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             SizedBox(
               width: 10,
             ),
             Text(
-              'Register',
+              'Đăng ký',
               style: TextStyle(
                   color: mainColor,
                   fontSize: 13,
@@ -230,41 +285,39 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _title() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: const TextSpan(
-          text: 'S',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: mainColor
-          ),
-          children: [
-            TextSpan(
-              text: 'ign',
-              style: TextStyle(color: Colors.black, fontSize: 30),
-            ),
-            TextSpan(
-              text: 'in',
-              style: TextStyle(color: mainColor, fontSize: 30),
-            ),
-          ]),
-    );
+    // return RichText(
+    //   textAlign: TextAlign.center,
+    //   text: const TextSpan(
+    //       text: 'S',
+    //       style: TextStyle(
+    //           fontSize: 30,
+    //           fontWeight: FontWeight.w700,
+    //           color: mainColor
+    //       ),
+    //       children: [
+    //         TextSpan(
+    //           text: 'ign',
+    //           style: TextStyle(color: Colors.black, fontSize: 30),
+    //         ),
+    //         TextSpan(
+    //           text: 'in',
+    //           style: TextStyle(color: mainColor, fontSize: 30),
+    //         ),
+    //       ]),
+    // );
+    return Image.asset("assets/images/logo.png",width: 120,height: 120,);
   }
-
   Widget _emailPasswordWidget() {
     return Column(
       children: <Widget>[
         _entryField("Email",controllerEmail),
-        _entryField("Password",controllerPassword, isPassword: true),
+        _entryField("Mật khẩu",controllerPassword, isPassword: true),
       ],
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    
     return Scaffold(
         // ignore: sized_box_for_whitespace
         body: Container(
@@ -286,24 +339,22 @@ class _LoginPageState extends State<LoginPage> {
                   _title(),
                   const SizedBox(height: 50),
                   _emailPasswordWidget(),
-                 
                   _submitButton(),
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     alignment: Alignment.centerRight,
-                    child: InkWell(onTap: (){  Navigator.push(context, MaterialPageRoute(builder: (context)=> const ResetPasswor()));},child:Text('Forgot Password ?',
+                    child: InkWell(onTap: (){  Navigator.push(context, MaterialPageRoute(builder: (context)=> const ResetPasswor()));},child:Text('Quên mật khẩu?',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w500)),
                   )),
                   _divider(),
-                  _facebookButton(),
-                  
+                  _googleButton(),
                   _createAccountLabel(),
                 ],
               ),
             ),
           ),
-          Positioned(top: 40, left: 0, child: _backButton()),
+          
         ],
       ),
     ));

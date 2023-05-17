@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
@@ -45,7 +46,7 @@ class _SignUpPageState extends State<SignUpPage> {
               padding: const EdgeInsets.only(left: 0, top: 10, bottom: 10),
               child: const Icon(Icons.keyboard_arrow_left, color: Colors.black),
             ),
-            const Text('Back',
+            const Text('Quay lại',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
           ],
         ),
@@ -79,9 +80,10 @@ class _SignUpPageState extends State<SignUpPage> {
             else{
               try{
                 var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
-               await Navigator.push(context, MaterialPageRoute(builder: (context)=> VerityEmail()));
                 User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
                 CreateData("User",user);
+                await Navigator.push(context, MaterialPageRoute(builder: (context)=> VerityEmail()));
+        
               }
               catch(e){
                 Fluttertoast.showToast(msg: "Email không tồn tại!");
@@ -89,7 +91,6 @@ class _SignUpPageState extends State<SignUpPage> {
               }
             }
             // var usercreate = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: controllerEmail.text.trim(), password: controllerPassword.text.trim());
-            
             // User user = User(id: usercreate.user!.uid,firstName:controllerFirstName.text,lastName: controllerLastName.text,email:controllerEmail.text,password: controllerPassword.text,createDate:DateTime.now(),phoneNumber: "",image: "https://firebasestorage.googleapis.com/v0/b/project-cb943.appspot.com/o/image%2FlogoPreson%2FUnknown_person.jpg?alt=media&token=061d880a-9464-41e4-af7e-c259aedcaef7",status: false);
             // CreateData("User",user);
       }
@@ -128,7 +129,7 @@ class _SignUpPageState extends State<SignUpPage> {
               colors: [Color(0xffa26ce4), Color(0xff9900cc)])),
 
       child: const Text(
-        'Register Now',
+        'Đăng ký',
         style: TextStyle(fontSize: 20, color: Colors.white),
       ),
     ),);
@@ -148,14 +149,14 @@ class _SignUpPageState extends State<SignUpPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: const <Widget>[
             Text(
-              'Already have an account ?',
+              'Bạn đã có tài khoản chưa?',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             SizedBox(
               width: 10,
             ),
             Text(
-              'Login',
+              'Đăng nhập',
               style: TextStyle(
                   color: mainColor,
                   fontSize: 13,
@@ -168,27 +169,28 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _title() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: const TextSpan(
-          text: 'S',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: mainColor
-          ),
+    // return RichText(
+    //   textAlign: TextAlign.center,
+    //   text: const TextSpan(
+    //       text: 'S',
+    //       style: TextStyle(
+    //           fontSize: 30,
+    //           fontWeight: FontWeight.w700,
+    //           color: mainColor
+    //       ),
 
-          children: [
-            TextSpan(
-              text: 'ign',
-              style: TextStyle(color: Colors.black, fontSize: 30),
-            ),
-            TextSpan(
-              text: 'up',
-              style: TextStyle(color: mainColor, fontSize: 30),
-            ),
-          ]),
-    );
+    //       children: [
+    //         TextSpan(
+    //           text: 'ign',
+    //           style: TextStyle(color: Colors.black, fontSize: 30),
+    //         ),
+    //         TextSpan(
+    //           text: 'up',
+    //           style: TextStyle(color: mainColor, fontSize: 30),
+    //         ),
+    //       ]),
+    // );
+    return Image.asset("assets/images/logo.png",width: 120,height: 120,);
   }
 
   Widget _emailPasswordWidget() {
@@ -236,7 +238,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       height: 20,
                     ),
                     _submitButton(),
-                  
                     _loginAccountLabel(),
                   ],
                 ),

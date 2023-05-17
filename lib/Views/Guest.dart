@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
+import 'package:do_an_tot_nghiep/Models/ChatFinal.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
 import 'package:do_an_tot_nghiep/Models/Notification.dart';
@@ -85,7 +86,7 @@ Future getListUser() async{
                 fontSize: 14,
                 color: Colors.grey.shade500
               ),
-              hintText: "Search users"
+              hintText: "Tìm kiếm"
             ),
           ),
         ),
@@ -101,38 +102,38 @@ Future getListUser() async{
               actionPane: const SlidableDrawerActionPane(),
               actionExtentRatio: 0.25,
               child: userComponent(user: _foundedUsers[index]),
-              actions: <Widget>[
-                IconSlideAction(
-                  caption: 'Archive',
-                  color: Colors.transparent,
-                  icon: Icons.archive,
+              // actions: <Widget>[
+              //   IconSlideAction(
+              //     caption: 'Archive',
+              //     color: Colors.transparent,
+              //     icon: Icons.archive,
                   
-                  onTap: () => print("archive"),
-                ),
-                IconSlideAction(
-                  caption: 'Share',
-                  color: Colors.transparent,
-                  icon: Icons.share,
-                  // ignore: avoid_print
-                  onTap: () => print('Share'),
-                ),
-              ],
-              secondaryActions: <Widget>[
-                IconSlideAction(
-                  caption: 'More',
-                  color: Colors.transparent,
-                  icon: Icons.more_horiz,
-                  // ignore: avoid_print
-                  onTap: () => print('More'),
-                ),
-                IconSlideAction(
-                  caption: 'Delete',
-                  color: Colors.transparent,
-                  icon: Icons.delete,
-                  // ignore: avoid_print
-                  onTap: () => print('Delete'),
-                ),
-              ],
+              //     onTap: () => print("archive"),
+              //   ),
+              //   IconSlideAction(
+              //     caption: 'Share',
+              //     color: Colors.transparent,
+              //     icon: Icons.share,
+              //     // ignore: avoid_print
+              //     onTap: () => print('Share'),
+              //   ),
+              // ],
+              // secondaryActions: <Widget>[
+              //   IconSlideAction(
+              //     caption: 'More',
+              //     color: Colors.transparent,
+              //     icon: Icons.more_horiz,
+              //     // ignore: avoid_print
+              //     onTap: () => print('More'),
+              //   ),
+              //   IconSlideAction(
+              //     caption: 'Delete',
+              //     color: Colors.transparent,
+              //     icon: Icons.delete,
+              //     // ignore: avoid_print
+              //     onTap: () => print('Delete'),
+              //   ),
+              // ],
             );
           }) : const Center(child: Text("No users found", style: TextStyle(color: Colors.white),)),
       ),
@@ -238,8 +239,12 @@ Future getListUser() async{
   
   agreeShip(Map<String,Object> user) async{
     await makeFriend((user["user"] as User).id!, auth.FirebaseAuth.instance.currentUser!.uid);
-    var chatRoom = ChatRoom(id: "",userFirst:(user["user"] as User).id!,userSecond:  auth.FirebaseAuth.instance.currentUser!.uid,createDate: DateTime.now());
-    CreateNewData("ChatRoom", chatRoom);
+    var chatRoom = ChatRoom(id: "",userFirstById:(user["user"] as User).id!,userFirstByFullName:"${(user["user"] as User).firstName!} ${(user["user"] as User).lastName!}",userFirstByImage: (user["user"] as User).image!,statusUserFirst: false,userSecondById:  myUser.id,userSecondByFullName: "${myUser.firstName!} ${myUser.lastName!}",userSecondByImage: myUser.image,statusUserSecond: false,createDate: DateTime.now());
+    CreateNewData("UserChat", chatRoom);
+     var chatfinal = ChatFinal(object: chatRoom.toJson(),chatContentFinal: "Hãy nhắn tin cho nhau nào!",chatFinalDate: DateTime.now(),typeChat: "user");
+    CreateNewData("Chat", chatfinal);
+   
+   
     setState(() {
         user["status"] = 3;
       });
@@ -248,5 +253,6 @@ Future getListUser() async{
        
       PushNotification.sendPushNotification(User(),"${myUser.firstName} ${myUser.lastName} đã đồng ý kết bạn với bạn.",(user["user"] as User).token!);
   }
+  
 } 
 

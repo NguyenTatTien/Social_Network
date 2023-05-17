@@ -14,6 +14,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:intl/intl.dart';
 
 import '../Models/CommentShow.dart';
 import '../Models/Like.dart';
@@ -264,7 +265,6 @@ class _PageCommentState extends State<PageComment> {
         ),
         width: 245.0,
         height:40,
-    
           child: AnimationLimiter(
           child: ListView.builder(
             itemCount: reactions.length,
@@ -272,7 +272,6 @@ class _PageCommentState extends State<PageComment> {
             scrollDirection: Axis.horizontal,
             itemBuilder: (BuildContext context, int index) {
               return Container(width: 40,alignment: Alignment.center,margin: EdgeInsets.symmetric(vertical: 0),padding: EdgeInsets.symmetric(vertical: 0),child:  AnimationConfiguration.staggeredList(
-              
                 position: index,
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
@@ -299,7 +298,10 @@ Widget commentView(int i){
                   userId: '${(jsonListComment![i]["userComment"] as User).id}',
                   avatar: '${(jsonListComment![i]["userComment"] as User).image}',
                   userName: '${(jsonListComment![i]["userComment"] as User).firstName} ${(jsonListComment![i]["userComment"] as User).lastName}',
-                  content: '${(jsonListComment![i]["parentComment"] as CommentObject).content}'),
+                  content: '${(jsonListComment![i]["parentComment"] as CommentObject).content}',
+                  createDate: (jsonListComment![i]["parentComment"] as CommentObject).createDate
+                  ),
+                  
                   
               // ignore: prefer_const_literals_to_create_immutables
               [
@@ -308,7 +310,10 @@ Widget commentView(int i){
                       userId: '${(item["userSubComment"] as User).id}',
                       avatar: '${(item["userSubComment"] as User).image}',
                       userName: '${(item["userSubComment"] as User).firstName} ${(item["userSubComment"] as User).lastName}',
-                      content: '${(item["subComment"] as CommentObject).content}'),
+                      content: '${(item["subComment"] as CommentObject).content}',
+                      createDate: (item["subComment"] as CommentObject).createDate
+                      ),
+                      
                 // Comment(
                 //     avatar: 'assets/images/person5.jpg',
                 //     userName: 'anh tien',
@@ -371,7 +376,7 @@ Widget commentView(int i){
                         ],
                       ),
                     ),
-                    if(data.userId!=auth.FirebaseAuth.instance.currentUser!.uid)
+                    
                       DefaultTextStyle(
                         // ignore: deprecated_member_use
                         style: Theme.of(context).textTheme.caption!.copyWith(
@@ -383,10 +388,11 @@ Widget commentView(int i){
                               SizedBox(
                                 width: 8,
                               ),
-                              Text('Like'),
+                              Text(DateTime.now().difference(data.createDate!).inDays>0?DateFormat("dd/MM/yyyy").format(data.createDate!).toString():DateFormat("HH:mm").format(data.createDate!).toString(),style: TextStyle(color: Colors.black38)),
                               SizedBox(
-                                width: 24,
+                                width: 15,
                               ),
+                               data.userId!=auth.FirebaseAuth.instance.currentUser!.uid?
                               InkWell(onTap: ()async{
                               commentController.text = data.userName!;
                               userReceiver = await getUserById(data.userId!);
@@ -396,7 +402,10 @@ Widget commentView(int i){
                                 commentController;
                               });
                              
-                            },child:Text('Reply'),),
+                            },child:
+                           
+                            Text('Phản hồi')
+                            ,):Text(""),
                             ],
                           ),
                         ),
@@ -432,7 +441,7 @@ Widget commentView(int i){
                         ],
                       ),
                     ),
-                  if(data.userId != auth.FirebaseAuth.instance.currentUser!.uid)
+               
                     DefaultTextStyle(
                       style: Theme.of(context).textTheme.caption!.copyWith(
                           color: Colors.grey[700], fontWeight: FontWeight.bold),
@@ -443,10 +452,11 @@ Widget commentView(int i){
                             SizedBox(
                               width: 8,
                             ),
-                            Text('Like'),
+                            Text(DateTime.now().difference(data.createDate!).inDays>0?DateFormat("dd/MM/yyyy").format(data.createDate!).toString():DateFormat("HH:mm").format(data.createDate!).toString(),style: TextStyle(color: Colors.black38)),
                             SizedBox(
-                              width: 24,
+                              width: 15,
                             ),
+                             data.userId != auth.FirebaseAuth.instance.currentUser!.uid?
                             InkWell(onTap: (){
                               commentController.text = (jsonListComment![i]["userComment"] as User).firstName! + " "+ (jsonListComment![i]["userComment"] as User).lastName!;
                               
@@ -456,7 +466,10 @@ Widget commentView(int i){
                                 commentController;
                               });
                           
-                            },child:Text('Reply')),
+                            },child:
+                           
+                            Text('Phản hồi')
+                            ):Text(""),
                           ],
                         ),
                       ),
@@ -474,8 +487,8 @@ Widget commentView(int i){
           userImage: CommentBox.commentImageParser(
               imageURLorPath: "${user.image}"),
           child: commentChild(),
-          labelText: 'Write a comment...',
-          errorText: 'Comment cannot be blank',
+          labelText: 'Bình luận...',
+          errorText: 'Không được để trống',
           withBorder: false,
           sendButtonMethod: () {
             commentPost(parentId,userReceiver);
@@ -538,8 +551,6 @@ Widget commentView(int i){
         return ReactionElement("Thích",Image.asset("assets/emoji/ic_like.png",width: 20,height: 20,));
     }
   }
-
-
 }
 
 

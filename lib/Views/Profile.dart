@@ -1,4 +1,5 @@
 import 'package:do_an_tot_nghiep/DAO/DAOHepper.dart';
+import 'package:do_an_tot_nghiep/Models/ChatFinal.dart';
 import 'package:do_an_tot_nghiep/Models/ChatRoom.dart';
 import 'package:do_an_tot_nghiep/Models/FriendShip.dart';
 import 'package:do_an_tot_nghiep/Models/Like.dart';
@@ -8,6 +9,7 @@ import 'package:do_an_tot_nghiep/Models/User.dart';
 import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
 import 'package:do_an_tot_nghiep/Views/Chat.dart';
 import 'package:do_an_tot_nghiep/Views/EditProfile.dart';
+import 'package:do_an_tot_nghiep/Views/ListFriends.dart';
 import 'package:do_an_tot_nghiep/Views/PageComment.dart';
 import 'package:do_an_tot_nghiep/Views/editorText.dart';
 import 'package:do_an_tot_nghiep/Views/loginPage.dart';
@@ -50,6 +52,9 @@ class _ProfileState extends State<Profile> {
   User user = User();
   int check = 0;
   User myUser =User();
+  int countFriend = 0;
+  String? roomId;
+  String? chatFinalId;
    List<ReactionElement> reactions= [
     ReactionElement("Like", Image.asset("assets/emoji/like.gif",width: 40,height: 40,)),
     ReactionElement("Love", Image.asset("assets/emoji/love.gif",width: 40,height: 40,)),
@@ -77,7 +82,10 @@ class _ProfileState extends State<Profile> {
          posts = await listPostByUser(id!);
       }
     }
+    countFriend = await countListFriend(myUser.id!);
+    getRoomChat(user.id!);
     setState(() {
+      countFriend;
       user;
       check;
     });
@@ -95,6 +103,10 @@ class _ProfileState extends State<Profile> {
     }
   deleteRequestShip(String userid) async{
       await deleteFriend(userid, auth.FirebaseAuth.instance.currentUser!.uid);
+      ChatRoom chatRoom = await getChatRoom(userid, auth.FirebaseAuth.instance.currentUser!.uid);
+     
+      await deleteChatRoom(chatRoom.id!);
+      await deleteChatFinal(chatFinalId!);
       setState(() {
         check = 0;
       });
@@ -102,8 +114,8 @@ class _ProfileState extends State<Profile> {
   
   agreeShip(String userId) async{
     await makeFriend(userId, auth.FirebaseAuth.instance.currentUser!.uid);
-    var chatRoom = ChatRoom(id: "",userFirst:userId,userSecond:  auth.FirebaseAuth.instance.currentUser!.uid,createDate: DateTime.now());
-    CreateNewData("ChatRoom", chatRoom);
+    //var chatRoom = ChatRoom(id: "",userFirst:userId,userSecond:  auth.FirebaseAuth.instance.currentUser!.uid,createDate: DateTime.now());
+   // CreateNewData("ChatRoom", chatRoom);
     setState(() {
         check = 3;
       });
@@ -116,6 +128,7 @@ class _ProfileState extends State<Profile> {
   void initState()  {
     user = User();
     getData();
+   
     // TODO: implement initState
     super.initState();
   }
@@ -143,7 +156,6 @@ class _ProfileState extends State<Profile> {
         CreateNewData("Notification", notification);
         User userPost = await getUserById(post.createBy!);
         PushNotification.sendPushNotification(User(),"${user.firstName} ${user.lastName} đã thích một bài viết của bạn",userPost.token!);
-
       }
       setState(() {
       ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["post"]) as Post).likeCount! + 1;
@@ -153,6 +165,21 @@ class _ProfileState extends State<Profile> {
     });
   
     }
+  }
+  void loadChatFinalId()async{
+   chatFinalId = await getChatFinalId(roomId!,"user");
+   print(chatFinalId);
+   setState(() {
+     chatFinalId;
+   });
+  }
+  getRoomChat(String userid) async{
+      roomId =  await getRoomChatByUser(userid,auth.FirebaseAuth.instance.currentUser!.uid);
+      print(roomId);
+     setState(() {
+       roomId;
+     });
+     loadChatFinalId();
   }
   logout() async{
       user.token = "";
@@ -231,10 +258,10 @@ class _ProfileState extends State<Profile> {
                       number: posts.length,
                       title: 'Bài viết',
                     ),
-                    PostFollower(
-                      number: 110,
+                    InkWell(onTap: ()=>  Navigator.push(context, MaterialPageRoute(builder: (context)=> const ListFriend())),child: PostFollower(
+                      number: countFriend,
                       title: 'Bạn bè',
-                    ),
+                    )),
                     
                   ],
                 ),
@@ -251,7 +278,16 @@ class _ProfileState extends State<Profile> {
                               
                               
                                     IconButton(
-                                    icon: const Icon(Icons.person_remove_sharp,color: Colors.blueAccent), onPressed: ()=>deleteRequestShip(user.id!),
+                                    icon: const Icon(Icons.person_remove_sharp,color: Colors.blueAccent), onPressed: ()=>{  showDialog(context: context, builder: (BuildContext context) {
+                return AlertDialog(
+                    title: const Text("Xóa bạn bè"),
+                    content: Text("Bạn có muốn xóa kêt bạn với ${user.firstName} ${user.lastName} không?"),
+                    actions: [
+                      ElevatedButton(onPressed: (){ Navigator.pop(context);}, child: const Text("Thoát")),
+                      ElevatedButton(onPressed: (){ deleteRequestShip(user.id!);}, child: const Text("Xóa"))
+                    ],
+                );
+              })},
                                   ),
                                   const Text('Xóa bạn bè',style: TextStyle(
                                     color: Colors.blueAccent
@@ -261,7 +297,12 @@ class _ProfileState extends State<Profile> {
                           Column(
                             children: <Widget>[
                               IconButton(
-                                icon: const Icon(Icons.message,color: Colors.blueAccent), onPressed: () {  },
+                                icon: const Icon(Icons.message,color: Colors.blueAccent), onPressed: () {  
+                                 
+                                  if(roomId!=""){
+                                      Navigator.push(context, MaterialPageRoute(builder: (context)=> MyChat(userMapId: user.id!,chatRoomId: roomId!,chatfinalId: chatFinalId!,)));
+                                  } 
+                                },
                               ),
                               const Text('Nhắn tin',style: TextStyle(
                                 color: Colors.blueAccent
@@ -470,19 +511,21 @@ const SizedBox(height: 10.0,),
                             ),)                           
                           ],),
                             if(user.id == auth.FirebaseAuth.instance.currentUser!.uid)
-                                  Row(children: <Widget>[
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: <Widget>[
                                 Expanded(
-                                  child: ElevatedButton(
+                                  child:Container(padding: EdgeInsets.only(right: 5),child:ElevatedButton(
                                     onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> const EditProfile())); },
                                     child: const Text('Chỉnh sửa thông tin'),
                                   ),
-                                ),
+                                )),
                                 Expanded(
-                                  child: ElevatedButton(
+                                  child: Container(padding: EdgeInsets.only(left: 5),child:ElevatedButton(
                                     onPressed: () { logout(); },
                                     child: const Text('Đăng xuất'),
                                   ),
-                                )
+                                ))
 
                                 ],),])),
                                 Divider(color: Color.fromARGB(95, 46, 46, 46),thickness: 5,),

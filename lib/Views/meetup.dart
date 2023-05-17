@@ -13,6 +13,7 @@ import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 // ignore: depend_on_referenced_packages
 import 'package:video_player/video_player.dart';
@@ -39,6 +40,8 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
    String parentId ="";
   User userReceiver= User();
    final TextEditingController commentController = TextEditingController();
+   late PersistentBottomSheetController _bottomcontroller;
+   
   User? myuser;
 
   @override
@@ -82,6 +85,9 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
   }
   @override
   void dispose() {
+     _controller.dispose();
+    
+    animationController.dispose();
     super.dispose();
     _controller.dispose();
     animationController.dispose();
@@ -135,6 +141,8 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
     });
     
   }
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,8 +340,9 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                                       style: const TextStyle(
                                           color: Colors.white, fontSize: 12))
                                 ],
-                              ),onTap: ()async{await getDataComment(listShortVideo[index]);showModalBottomSheet<void>(
+                              ),onTap: ()async{await getDataComment(listShortVideo[index]); showModalBottomSheet<void>(
             context: context,
+            
             isScrollControlled: true,
             builder: (BuildContext context) {
               return StatefulBuilder(builder:(BuildContext context,StateSetter setstater){return Container(
@@ -358,6 +367,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
             commentPost(parentId,userReceiver,listShortVideo[index]);
             setState(() {
               commentController.text = "";
+                 jsonListComment;
             });
           },
           formKey: formKey,
@@ -597,7 +607,9 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                   userId: '',
                   avatar: '${(jsonListComment[i]["userComment"] as User).image}',
                   userName: '${(jsonListComment[i]["userComment"] as User).firstName} ${(jsonListComment[i]["userComment"] as User).lastName}',
-                  content: '${(jsonListComment[i]["parentComment"] as CommentObject).content}'),
+                  content: '${(jsonListComment[i]["parentComment"] as CommentObject).content}',
+                  createDate: (jsonListComment[i]["parentComment"] as CommentObject).createDate
+                  ),
                   
               // ignore: prefer_const_literals_to_create_immutables
               [
@@ -606,7 +618,9 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                       userId: '${(item["userSubComment"] as User).id}',
                       avatar: '${(item["userSubComment"] as User).image}',
                       userName: '${(item["userSubComment"] as User).firstName} ${(item["userSubComment"] as User).lastName}',
-                      content: '${(item["subComment"] as CommentObject).content}'),
+                      content: '${(item["subComment"] as CommentObject).content}',
+                      createDate: (item["subComment"] as CommentObject).createDate
+                      ),
                 // Comment(
                 //     avatar: 'assets/images/person5.jpg',
                 //     userName: 'anh tien',
@@ -624,14 +638,14 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
               ],
               
               treeThemeData:
-                    TreeThemeData(lineColor:(jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>).length>0?Color.fromARGB(255, 223, 223, 223):Color.fromARGB(255, 255, 255, 255), lineWidth:2),
+                    TreeThemeData(lineColor:(jsonListComment[i]["jsonSubComment"] as List<Map<String,Object>>).length>0?const Color.fromARGB(255, 223, 223, 223):const Color.fromARGB(255, 255, 255, 255), lineWidth:2),
               avatarRoot: (context, data) => PreferredSize(
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey,
                   backgroundImage: NetworkImage(data.avatar!),
                 ),
-                preferredSize: Size.fromRadius(18),
+                preferredSize: const Size.fromRadius(18),
               ),
               avatarChild: (context, data) => PreferredSize(
                 child: CircleAvatar(
@@ -639,14 +653,14 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                   backgroundColor: Colors.grey,
                   backgroundImage: NetworkImage('${data.avatar}'),
                 ),
-                preferredSize: Size.fromRadius(12),
+                preferredSize: const Size.fromRadius(12),
               ),
               contentChild: (context, data) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                       decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(12)),
@@ -669,22 +683,23 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                         ],
                       ),
                     ),
-                    if(data.userId!=auth.FirebaseAuth.instance.currentUser!.uid)
+                   
                       DefaultTextStyle(
                         // ignore: deprecated_member_use
                         style: Theme.of(context).textTheme.caption!.copyWith(
                             color: Colors.grey[700], fontWeight: FontWeight.bold),
                         child: Padding(
-                          padding: EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 4),
                           child: Row(
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 8,
                               ),
-                              Text('Like'),
-                              SizedBox(
+                                Text(DateTime.now().difference(data.createDate!).inDays>0?DateFormat("dd/MM/yyyy").format(data.createDate!).toString():DateFormat("HH:mm").format(data.createDate!).toString(),style: TextStyle(color: Colors.black38),),
+                              const SizedBox(
                                 width: 24,
                               ),
+                              data.userId!=auth.FirebaseAuth.instance.currentUser!.uid?
                               InkWell(onTap: ()async{
                               commentController.text = data.userName!;
                               userReceiver = await getUserById(data.userId!);
@@ -694,7 +709,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                                 commentController;
                               });
                              
-                            },child:Text('Reply'),),
+                            },child:const Text('Phản hồi'),):Text(""),
                             ],
                           ),
                         ),
@@ -707,7 +722,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                       decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(12)),
@@ -735,16 +750,17 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                       style: Theme.of(context).textTheme.caption!.copyWith(
                           color: Colors.grey[700], fontWeight: FontWeight.bold),
                       child: Padding(
-                        padding: EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Row(
                           children: [
                             const SizedBox(
                               width: 8,
                             ),
-                            Text('Like'),
-                            SizedBox(
+                              Text(DateTime.now().difference(data.createDate!).inDays>0?DateFormat("dd/MM/yyyy").format(data.createDate!).toString():DateFormat("HH:mm").format(data.createDate!).toString(),style: TextStyle(color: Colors.black38)),
+                            const SizedBox(
                               width: 24,
                             ),
+                             data.userId != auth.FirebaseAuth.instance.currentUser!.uid?
                             InkWell(onTap: (){
                               commentController.text = (jsonListComment[i]["userComment"] as User).firstName! + " "+ (jsonListComment[i]["userComment"] as User).lastName!;
                               
@@ -754,7 +770,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
                                 commentController;
                               });
                           
-                            },child:Text('Reply')),
+                            },child:const Text('Phản hồi')):Text(""),
                           ],
                         ),
                       ),
@@ -791,7 +807,7 @@ class _Watches extends State<Watches> with SingleTickerProviderStateMixin {
     }
    (jsonPost!["shortvideo"] as ShortVideo).commentCount = (jsonPost!["shortvideo"] as ShortVideo).commentCount! + 1;
   
- // updatePost((jsonPost!["post"] as ShortVideo));
+  updateData("ShortVideo",(jsonPost!["shortvideo"] as ShortVideo));
     setState(() {
       jsonListComment;
       jsonPost;

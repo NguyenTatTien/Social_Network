@@ -114,7 +114,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     return 
-    // PickupLayout(scaffold: 
+     PickupLayout(scaffold: 
     Scaffold(
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
@@ -187,11 +187,11 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
       // ]),),)   
        NavigationBarTheme(data:NavigationBarThemeData(indicatorColor: mainColor.withOpacity(0.5),labelTextStyle: MaterialStateProperty.all(const TextStyle(fontSize: 10,fontWeight: FontWeight.bold,color: Colors.black))),
        child:NavigationBar(height: 60,backgroundColor: Colors.white30,animationDuration: const Duration(seconds: 1),selectedIndex: _selectedIndex,onDestinationSelected: _onItemTapped,destinations:  [
-        NavigationDestination(icon: Icon(Icons.home_outlined), label: "Home",selectedIcon: Icon(Icons.home),),
-        NavigationDestination(icon: Icon(Icons.person_outline), label: "Person",selectedIcon: Icon(Icons.person),),
-        NavigationDestination(icon: Icon(Icons.message_outlined), label: "Message",selectedIcon: Icon(Icons.message),),
-        NavigationDestination(icon: Icon(Icons.tv_outlined), label: "Watch",selectedIcon: Icon(Icons.tv),),
-        NavigationDestination(icon: Badge(child: Icon(Icons.notifications_outlined),label: Text("1"),isLabelVisible: false,), label: "Notification",selectedIcon: Icon(Icons.notifications,)),
+        NavigationDestination(icon: Icon(Icons.home_outlined), label: "Trang chủ",selectedIcon: Icon(Icons.home),),
+        NavigationDestination(icon: Icon(Icons.person_outline), label: "Kết bạn",selectedIcon: Icon(Icons.person),),
+        NavigationDestination(icon: Icon(Icons.message_outlined), label: "Nhắn tin",selectedIcon: Icon(Icons.message),),
+        NavigationDestination(icon: Icon(Icons.tv_outlined), label: "Video",selectedIcon: Icon(Icons.tv),),
+        NavigationDestination(icon: Badge(child: Icon(Icons.notifications_outlined),label: Text("1"),isLabelVisible: false,), label: "Thông báo",selectedIcon: Icon(Icons.notifications,)),
         // Stack(
         //           children: <Widget>[
         //             NavigationDestination(icon: Icon(Icons.notifications_outlined), label: "Notification",selectedIcon: Icon(Icons.notifications)),
@@ -211,7 +211,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> with WidgetsBindingOb
         //         ),
                             
        ],))
-       )
+       ))
        ;
   }
 }

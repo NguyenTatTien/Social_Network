@@ -77,38 +77,37 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
                   Icons.home,
                   // color: Colors.grey[500],
                 ),
-                label: "Home",
+                label: "Trang chủ",
                 backgroundColor: Colors.green),
             BottomNavigationBarItem(
                 icon: Icon(
                   Icons.person,
                 ),
-                label: "Friend",
+                label: "Kết bạn",
                 backgroundColor: Colors.yellow),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.message,
               ),
-              label: "Message",
+              label: "Nhắn tin",
               backgroundColor: Colors.blue,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.tv),
-              label: "Watch",
+              label: "Video",
               backgroundColor: Colors.blue,
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.notification_important_outlined,
               ),
-              label: "Notification",
+              label: "Thông báo",
               backgroundColor: Colors.blue,
             ),
           ],
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           // selectedItemColor: Colors.orange,
-
           unselectedItemColor: Colors.grey[500],
           selectedFontSize: 10,
           unselectedFontSize: 10,

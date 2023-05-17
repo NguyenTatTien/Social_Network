@@ -3,6 +3,7 @@ import 'package:do_an_tot_nghiep/NotificationService/PushNotification.dart';
 import 'package:do_an_tot_nghiep/Views/Navigation.dart';
 import 'package:do_an_tot_nghiep/Views/loginPage.dart';
 import 'package:do_an_tot_nghiep/Views/onboarding_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -14,13 +15,13 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'Views/login.dart';
 int? initScreen=0;
-bool?status;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   initScreen = await prefs.getInt("initScreen");
-  status = prefs.getBool('isLoggedIn');
+
   await prefs.setInt("initScreen", 1);
   runApp(MyApp());
 }
@@ -186,7 +187,8 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
 
-    return initScreen==0||initScreen==null? OnboardingScreen(): status==false?LoginPage():NavigatorView();
+    // ignore: unnecessary_null_comparison
+    return initScreen==0||initScreen==null? const OnboardingScreen(): (FirebaseAuth.instance.currentUser==null && FirebaseAuth.instance.currentUser!.uid==null)?const LoginPage():const NavigatorView();
      
   }
 }

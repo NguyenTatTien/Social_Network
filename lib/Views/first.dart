@@ -43,6 +43,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
   ];
    Future inintall()async{
     posts = await listPost("Post",auth.FirebaseAuth.instance.currentUser!.uid,lastData);
+    print((posts[0]["listUserLikePost"] as List<Like>).length);
     setState(() {
       posts;
        _reactionViews = List<bool>.generate(posts.length, (index) => false,growable: true);
@@ -84,7 +85,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
       updateLikePost(getlike);
       setState(() {
         ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).firstWhere((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid).type=index;
-       
+         //_reactionViews[index] = false;
       });
     }
     else{
@@ -103,7 +104,7 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
       }
       setState(() {
       ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["post"]) as Post).likeCount! + 1;
-     
+      // _reactionViews[index] = false;
       // ((posts.firstWhere((element) => (element["post"] as Post).id==id)["listUserLikePost"]) as List<Like>).remove((element) => element.userId==auth.FirebaseAuth.instance.currentUser!.uid);
       ((posts.firstWhere((element) => (element["post"] as Post).id==post.id)["listUserLikePost"]) as List<Like>).add(like);
     });
@@ -229,8 +230,16 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
               children: [
               if((post["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isEmpty)
                     InkWell(onTap: (){likePost((post["post"] as Post),1);},onLongPress: (){setState(() {
+                     
                         _reactionViews[index] = true;
-                      });},child:  Row(
+                      });
+                      },onTapCancel: () {
+                         
+                        setState(() {
+                            _reactionViews[index] = false;
+                        });
+                        
+                      },child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
                           getImage(0).icon,
@@ -241,7 +250,11 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
               if((post["listUserLikePost"] as List<Like>).where((element)=>element.userId==auth.FirebaseAuth.instance.currentUser!.uid).isNotEmpty)
                       InkWell(onTap: (){notLikePost((post["post"] as Post));},onLongPress: (){setState(() {
                        _reactionViews[index] = true;
-                      });},child:  Row(
+                      });},onTapCancel: () {
+                         
+                        setState(() {
+                            _reactionViews[index] = false;
+                        });},child:  Row(
                         children: [
                           // ignore: avoid_unnecessary_containers
                           // const Icon(Icons.favorite,size: 20,color: Colors.pink,),
@@ -288,19 +301,18 @@ class _FirstFeedIUState extends State<FirstFeedIU> {
             itemCount: reactions.length,
             padding: EdgeInsets.symmetric(vertical: 0),
             scrollDirection: Axis.horizontal,
-            itemBuilder: (BuildContext context, int index) {
+            itemBuilder: (BuildContext context, int i) {
               return Container(width: 40,alignment: Alignment.center,margin: EdgeInsets.symmetric(vertical: 0),padding: EdgeInsets.symmetric(vertical: 0),child:  AnimationConfiguration.staggeredList(
               
-                position: index,
+                position: i,
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
                   
                   verticalOffset: 20,
                   
                   child:FadeInAnimation(
-                  
-                    child: InkWell(child:reactions[index].icon,onTap: (){likePost((post["post"] as Post),index+1);setState(() {
-                      _reactionViews[index] = false;
+                    child: InkWell(child:reactions[i].icon,onTap: (){likePost((post["post"] as Post),i+1);setState(() {
+                         _reactionViews[index] = false;
                     });})
                   ),
                 ),

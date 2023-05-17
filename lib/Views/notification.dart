@@ -48,7 +48,7 @@ class _NotificationPageState extends State<NotificationPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Text("Thông báo",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 20),),
+        title: Center(child:Text("Thông báo",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 20),),)
       ),
       body: Container(
         color: Colors.white,
